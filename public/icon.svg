@@ -1,0 +1,6 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <rect width="180" height="180" rx="36" fill="#090504"/>
+  <rect x="6" y="6" width="168" height="168" rx="31" fill="none" stroke="#fa5d36" stroke-width="6"/>
+  <text x="90" y="116" text-anchor="middle" font-family="Inter, 'Segoe UI', Arial, sans-serif"
+        font-size="76" font-weight="800" fill="#fa5d36">KS</text>
+</svg>

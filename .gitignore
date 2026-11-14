@@ -1,0 +1,15 @@
+# Dependencies and build output
+node_modules
+.next/
+out/
+*.tsbuildinfo
+
+# Local environment
+.env*.local
+.vercel
+.DS_Store
+
+# Signing keys never belong in the repository
+*.keystore
+*.jks
+keystore.properties

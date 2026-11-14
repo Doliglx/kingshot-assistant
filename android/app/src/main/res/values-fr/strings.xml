@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="autoclick_label">KingShot Assistant – Auto Clicker</string>
+    <string name="autoclick_summary">Appuie sur les points que vous avez placés à l\'écran.</string>
+    <string name="autoclick_description">Permet à KingShot Assistant d\'appuyer sur l\'écran à votre place, aux points que vous avez placés avec ses repères flottants. Il ne lit pas le contenu de l\'écran et ne reçoit aucune information des autres applications. Vous pouvez le désactiver ici à tout moment.</string>
+</resources>

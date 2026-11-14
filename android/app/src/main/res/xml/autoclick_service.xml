@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto clicker accessibility service.
+  No accessibilityEventTypes and canRetrieveWindowContent="false":
+  the service receives no screen events and cannot read what other apps display.
+  The only capability requested is performing gestures.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:canPerformGestures="true"
+    android:canRetrieveWindowContent="false"
+    android:description="@string/autoclick_description"
+    android:summary="@string/autoclick_summary" />

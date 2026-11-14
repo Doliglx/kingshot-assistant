@@ -1,0 +1,95 @@
+name: Release
+
+# Builds the APK and publishes a GitHub release.
+# Runs when a branch named claude/release-* or release/* is pushed, or by hand.
+#
+# Signing: add these repository secrets (Settings → Secrets and variables → Actions)
+#   KS_RELEASE_KEYSTORE_BASE64   the keystore file, base64-encoded
+#   KS_RELEASE_STORE_PASSWORD
+#   KS_RELEASE_KEY_ALIAS
+#   KS_RELEASE_KEY_PASSWORD
+# Without them the workflow still publishes, but with a debug build signed by a
+# throw-away key (it cannot be installed over a properly signed version).
+on:
+  push:
+    branches: ["claude/release-*", "release/*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Android SDK platform 36
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build:android
+
+      - name: Read the version
+        id: version
+        run: |
+          name=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "tag=v$name" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare the signing key
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KS_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No signing secrets: publishing a debug build signed with a throw-away key."
+          fi
+
+      - name: Build the signed release APK
+        if: steps.signing.outputs.signed == 'true'
+        working-directory: android
+        env:
+          KS_RELEASE_STORE_FILE: ${{ runner.temp }}/release.jks
+          KS_RELEASE_STORE_PASSWORD: ${{ secrets.KS_RELEASE_STORE_PASSWORD }}
+          KS_RELEASE_KEY_ALIAS: ${{ secrets.KS_RELEASE_KEY_ALIAS }}
+          KS_RELEASE_KEY_PASSWORD: ${{ secrets.KS_RELEASE_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/KingShot-Assistant-${{ steps.version.outputs.tag }}.apk"
+
+      - name: Build a debug APK (no signing secrets)
+        if: steps.signing.outputs.signed != 'true'
+        working-directory: android
+        run: |
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/KingShot-Assistant-${{ steps.version.outputs.tag }}-debug.apk"
+
+      - name: Remove the signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: KingShot Assistant ${{ steps.version.outputs.name }}
+          prerelease: ${{ contains(steps.version.outputs.name, 'beta') }}
+          body_path: docs/release-notes/${{ steps.version.outputs.tag }}.md
+          files: KingShot-Assistant-*.apk

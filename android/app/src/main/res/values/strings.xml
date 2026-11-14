@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KingShot Assistant</string>
+    <string name="title_activity_main">KingShot Assistant</string>
+    <string name="package_name">com.doliglx.ksassist</string>
+    <string name="custom_url_scheme">com.doliglx.ksassist</string>
+    <string name="autoclick_label">KingShot Assistant – Auto Clicker</string>
+    <string name="autoclick_summary">Taps the points you placed on screen.</string>
+    <string name="autoclick_description">Lets KingShot Assistant tap the screen for you at the points you placed with its floating markers. It does not read the screen content and receives no information from other apps. Turn it off here at any time.</string>
+</resources>
