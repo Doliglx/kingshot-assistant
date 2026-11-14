@@ -141,6 +141,7 @@ export const it: AppText = {
     tap: "Tocco",
     hold: "Pressione lunga",
     swipe: "Scorrimento",
+    tapMs: "Durata del tocco (ms)",
     holdMs: "Durata della pressione (ms)",
     swipeMs: "Durata dello scorrimento (ms)",
     delayAfter: "Attesa dopo (ms)",
@@ -154,6 +155,8 @@ export const it: AppText = {
     panelHelp:
       "Passa al gioco, trascina ogni indicatore numerato sul suo pulsante e poi premi ▶. Le posizioni vengono salvate con la macro.",
     safety: "Si ferma da solo quando lo schermo si spegne o il telefono ruota.",
+    speedNote:
+      "Android impiega circa 20–40 ms per eseguire ogni tocco: sotto questa soglia, ridurre i valori non cambia più nulla. Tutto si regola anche dal pannello fluttuante (⚙).",
     native: {
       ready: "Pronto",
       running: "In corso",

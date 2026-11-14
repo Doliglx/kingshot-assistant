@@ -7,6 +7,9 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /** JavaScript bridge of the auto clicker. */
 @CapacitorPlugin(name = "AutoClicker")
@@ -61,13 +64,15 @@ public class AutoClickerPlugin extends Plugin {
                 call.reject("SERVICE_OFF");
                 return;
             }
-            boolean ok = s.showPanel(
-                id,
-                texts.getString("ready"),
-                texts.getString("running"),
-                texts.getString("startsIn"),
-                texts.getString("done")
-            );
+            // Texts of the panel, in the app language (plain strings only).
+            Map<String, String> map = new HashMap<>();
+            Iterator<String> keys = texts.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                String value = texts.getString(key);
+                if (value != null && value.length() <= 80) map.put(key, value);
+            }
+            boolean ok = s.showPanel(id, map);
             if (ok) call.resolve();
             else call.reject("UNKNOWN_CONFIG");
         });

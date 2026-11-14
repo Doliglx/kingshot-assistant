@@ -141,6 +141,7 @@ export const de: AppText = {
     tap: "Tippen",
     hold: "Lange drücken",
     swipe: "Wischen",
+    tapMs: "Tippdauer (ms)",
     holdMs: "Druckdauer (ms)",
     swipeMs: "Wischdauer (ms)",
     delayAfter: "Danach warten (ms)",
@@ -154,6 +155,8 @@ export const de: AppText = {
     panelHelp:
       "Wechsle ins Spiel, zieh jede nummerierte Markierung auf ihre Schaltfläche und drücke dann ▶. Die Positionen werden mit dem Makro gespeichert.",
     safety: "Er stoppt von selbst, wenn der Bildschirm ausgeht oder das Handy gedreht wird.",
+    speedNote:
+      "Android braucht etwa 20–40 ms, um jedes Tippen auszuführen: Noch kleinere Werte ändern nichts mehr. Alles lässt sich auch im schwebenden Panel einstellen (⚙).",
     native: {
       ready: "Bereit",
       running: "Läuft",

@@ -142,7 +142,8 @@ export const pt: AppText = {
     tap: "Toque",
     hold: "Toque longo",
     swipe: "Deslizar",
-    holdMs: "Duração do toque (ms)",
+    tapMs: "Duração do toque (ms)",
+    holdMs: "Duração do toque longo (ms)",
     swipeMs: "Duração do deslize (ms)",
     delayAfter: "Espera depois (ms)",
     repeat: "Repetições",
@@ -155,6 +156,8 @@ export const pt: AppText = {
     panelHelp:
       "Vá para o jogo, arraste cada marcador numerado até o botão correspondente e toque em ▶. As posições são salvas com a macro.",
     safety: "Ele para sozinho quando a tela apaga ou o celular gira.",
+    speedNote:
+      "O Android leva cerca de 20–40 ms para executar cada toque: abaixo disso, reduzir os valores não muda mais nada. Tudo também pode ser ajustado no painel flutuante (⚙).",
     native: {
       ready: "Pronto",
       running: "Em execução",

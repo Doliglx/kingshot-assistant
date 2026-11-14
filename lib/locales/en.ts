@@ -141,6 +141,7 @@ export const en: AppText = {
     tap: "Tap",
     hold: "Long press",
     swipe: "Swipe",
+    tapMs: "Tap duration (ms)",
     holdMs: "Press duration (ms)",
     swipeMs: "Swipe duration (ms)",
     delayAfter: "Wait after (ms)",
@@ -154,6 +155,8 @@ export const en: AppText = {
     panelHelp:
       "Switch to your game, drag each numbered marker onto its button, then press ▶. Positions are saved with the macro.",
     safety: "It stops by itself when the screen turns off or the phone rotates.",
+    speedNote:
+      "Android needs roughly 20–40 ms to deliver each tap, so very small values stop making a difference. Everything here can also be changed from the floating panel (⚙).",
     native: {
       ready: "Ready",
       running: "Running",

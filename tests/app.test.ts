@@ -88,7 +88,7 @@ describe("auto clicker macros", () => {
 
   it("estimates the length of a cycle", () => {
     const c = newConfig("Heal", "multi", ["Heal", "Help"])
-    // 2 taps of 40 ms + 2 waits of 500 ms + 1000 ms pause
-    assert.equal(cycleDurationMs(c), 2 * 40 + 2 * 500 + 1000)
+    // 2 taps of 20 ms + 2 waits of 500 ms + 1000 ms pause
+    assert.equal(cycleDurationMs(c), 2 * 20 + 2 * 500 + 1000)
   })
 })

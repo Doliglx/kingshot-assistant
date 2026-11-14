@@ -141,6 +141,7 @@ export const tr: AppText = {
     tap: "Dokunma",
     hold: "Uzun basma",
     swipe: "Kaydırma",
+    tapMs: "Dokunma süresi (ms)",
     holdMs: "Basma süresi (ms)",
     swipeMs: "Kaydırma süresi (ms)",
     delayAfter: "Sonrasında bekle (ms)",
@@ -154,6 +155,8 @@ export const tr: AppText = {
     panelHelp:
       "Oyununa geç, numaralı her işaretçiyi kendi düğmesinin üzerine sürükle, sonra ▶ düğmesine bas. Konumlar makroyla birlikte kaydedilir.",
     safety: "Ekran kapandığında veya telefon döndüğünde kendiliğinden durur.",
+    speedNote:
+      "Android her dokunuşu iletmek için yaklaşık 20–40 ms harcar: bunun altındaki değerler artık fark yaratmaz. Her şey yüzen panelden de ayarlanabilir (⚙).",
     native: {
       ready: "Hazır",
       running: "Çalışıyor",

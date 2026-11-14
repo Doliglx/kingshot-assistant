@@ -21,6 +21,8 @@ export interface ClickTarget {
   /** Swipe end point. */
   x2: number | null
   y2: number | null
+  /** Duration of a plain tap. */
+  tapMs: number
   holdMs: number
   swipeMs: number
   delayAfterMs: number
@@ -45,10 +47,11 @@ export const LIMITS = {
   targets: 20,
   configs: 50,
   name: 40,
-  intervalMs: [50, 3_600_000],
+  intervalMs: [1, 3_600_000],
   startDelaySec: [0, 60],
   cycles: [1, 1_000_000],
   durationSec: [1, 86_400],
+  tapMs: [1, 500],
   holdMs: [100, 10_000],
   swipeMs: [100, 5_000],
   delayAfterMs: [0, 600_000],
@@ -79,6 +82,7 @@ export function newTarget(label = ""): ClickTarget {
     y: null,
     x2: null,
     y2: null,
+    tapMs: 20,
     holdMs: 600,
     swipeMs: 300,
     delayAfterMs: 500,
@@ -118,6 +122,7 @@ export function sanitizeConfig(raw: unknown): ClickConfig | null {
       y: coord(t.y),
       x2: coord(t.x2),
       y2: coord(t.y2),
+      tapMs: clamp(t.tapMs, LIMITS.tapMs, 20),
       holdMs: clamp(t.holdMs, LIMITS.holdMs, 600),
       swipeMs: clamp(t.swipeMs, LIMITS.swipeMs, 300),
       delayAfterMs: clamp(t.delayAfterMs, LIMITS.delayAfterMs, 500),
@@ -152,7 +157,7 @@ export function parseConfigs(json: string): ClickConfig[] {
 
 /** Length of one cycle in ms (gestures + waits), used for the summary line. */
 export function cycleDurationMs(c: ClickConfig): number {
-  const gesture = (t: ClickTarget) => (t.type === "hold" ? t.holdMs : t.type === "swipe" ? t.swipeMs : 40)
+  const gesture = (t: ClickTarget) => (t.type === "hold" ? t.holdMs : t.type === "swipe" ? t.swipeMs : t.tapMs)
   const body = c.targets.reduce(
     (sum, t) => sum + t.repeat * (gesture(t) + (c.mode === "multi" ? t.delayAfterMs : 0)),
     0
@@ -170,7 +175,8 @@ export interface AutoClickerPlugin {
   saveConfigs(options: { json: string }): Promise<void>
   showPanel(options: {
     configId: string
-    texts: { ready: string; running: string; startsIn: string; done: string }
+    /** Texts of the floating panel, in the app language. */
+    texts: Record<string, string>
   }): Promise<void>
   hidePanel(): Promise<void>
 }

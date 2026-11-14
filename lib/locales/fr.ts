@@ -141,7 +141,8 @@ export const fr: AppText = {
     tap: "Appui",
     hold: "Appui long",
     swipe: "Glissement",
-    holdMs: "Durée de l'appui (ms)",
+    tapMs: "Durée de l'appui (ms)",
+    holdMs: "Durée de l'appui long (ms)",
     swipeMs: "Durée du glissement (ms)",
     delayAfter: "Attente après (ms)",
     repeat: "Répétitions",
@@ -154,6 +155,8 @@ export const fr: AppText = {
     panelHelp:
       "Passez sur votre jeu, faites glisser chaque repère numéroté sur son bouton, puis appuyez sur ▶. Les positions sont enregistrées avec la macro.",
     safety: "Il s'arrête tout seul quand l'écran s'éteint ou que le téléphone pivote.",
+    speedNote:
+      "Android met environ 20 à 40 ms à transmettre chaque appui : en dessous, réduire les valeurs ne change plus rien. Tout se règle aussi depuis le panneau flottant (⚙).",
     native: {
       ready: "Prêt",
       running: "En cours",

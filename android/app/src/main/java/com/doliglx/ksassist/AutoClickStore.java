@@ -23,9 +23,16 @@ final class AutoClickStore {
     // Hard limits, mirrored in lib/auto-clicker.ts
     static final int MAX_TARGETS = 20;
     static final int MAX_JSON_CHARS = 200_000;
-    static final long MIN_INTERVAL_MS = 50;
+    static final long MIN_INTERVAL_MS = 1;
     static final long MAX_INTERVAL_MS = 3_600_000;
-    static final long TAP_MS = 40;
+    static final long[] TAP_RANGE = { 1, 500 };
+    static final long[] HOLD_RANGE = { 100, 10_000 };
+    static final long[] SWIPE_RANGE = { 100, 5_000 };
+    static final long[] DELAY_RANGE = { 0, 600_000 };
+    static final long[] REPEAT_RANGE = { 1, 1000 };
+    static final long[] START_DELAY_RANGE = { 0, 60 };
+    static final long[] CYCLES_RANGE = { 1, 1_000_000 };
+    static final long[] DURATION_RANGE = { 1, 86_400 };
 
     private AutoClickStore() {}
 
@@ -34,6 +41,7 @@ final class AutoClickStore {
         String type = "tap"; // tap | hold | swipe
         float x = -1, y = -1; // screen pixels, -1 = not placed yet
         float x2 = -1, y2 = -1; // swipe end
+        long tapMs = 20;
         long holdMs = 600;
         long swipeMs = 300;
         long delayAfterMs = 500;
@@ -87,43 +95,86 @@ final class AutoClickStore {
         return null;
     }
 
-    /** Writes the targets of a macro back (positions edited on the overlay). */
-    static void saveTargets(Context ctx, Config cfg) {
+    /** Ids and names of every saved macro, in order. */
+    static List<String[]> list(Context ctx) {
+        List<String[]> out = new ArrayList<>();
         try {
             JSONArray all = new JSONArray(readRaw(ctx));
             for (int i = 0; i < all.length(); i++) {
                 JSONObject o = all.optJSONObject(i);
-                if (o == null || !cfg.id.equals(o.optString("id"))) continue;
-                JSONArray old = o.optJSONArray("targets");
-                JSONArray out = new JSONArray();
-                for (int k = 0; k < cfg.targets.size(); k++) {
-                    Target t = cfg.targets.get(k);
-                    // Keep fields the overlay does not edit (label…) from the stored entry.
-                    JSONObject j = null;
-                    if (old != null) {
-                        for (int m = 0; m < old.length(); m++) {
-                            JSONObject c = old.optJSONObject(m);
-                            if (c != null && t.id.equals(c.optString("id"))) j = c;
-                        }
-                    }
-                    if (j == null) j = new JSONObject();
-                    j.put("id", t.id);
-                    j.put("type", t.type);
-                    j.put("x", t.placed() ? Math.round(t.x) : JSONObject.NULL);
-                    j.put("y", t.placed() ? Math.round(t.y) : JSONObject.NULL);
-                    j.put("x2", t.endPlaced() ? Math.round(t.x2) : JSONObject.NULL);
-                    j.put("y2", t.endPlaced() ? Math.round(t.y2) : JSONObject.NULL);
-                    j.put("holdMs", t.holdMs);
-                    j.put("swipeMs", t.swipeMs);
-                    j.put("delayAfterMs", t.delayAfterMs);
-                    j.put("repeat", t.repeat);
-                    if (!j.has("label")) j.put("label", "");
-                    out.put(j);
+                if (o != null && !o.optString("id").isEmpty()) {
+                    out.add(new String[] { o.optString("id"), o.optString("name") });
                 }
-                o.put("targets", out);
-                prefs(ctx).edit().putString(KEY, all.toString()).apply();
-                return;
             }
+        } catch (JSONException ignored) {}
+        return out;
+    }
+
+    /** Creates a new single-target macro and returns it. */
+    static Config create(Context ctx, String name) {
+        Config c = new Config();
+        c.id = "m" + System.currentTimeMillis();
+        c.name = name;
+        Target t = new Target();
+        t.id = "t" + System.currentTimeMillis();
+        c.targets.add(t);
+        save(ctx, c);
+        return c;
+    }
+
+    /**
+     * Writes a macro back after it was edited on the floating panel.
+     * Fields the panel does not edit (target labels) are kept from the stored entry.
+     */
+    static void save(Context ctx, Config cfg) {
+        try {
+            JSONArray all = new JSONArray(readRaw(ctx));
+            JSONObject o = null;
+            for (int i = 0; i < all.length(); i++) {
+                JSONObject c = all.optJSONObject(i);
+                if (c != null && cfg.id.equals(c.optString("id"))) o = c;
+            }
+            if (o == null) {
+                o = new JSONObject();
+                o.put("id", cfg.id);
+                all.put(o);
+            }
+            o.put("name", cfg.name);
+            o.put("mode", cfg.mode);
+            o.put("intervalMs", cfg.intervalMs);
+            o.put("startDelaySec", cfg.startDelaySec);
+            o.put("stop", cfg.stop);
+            o.put("cycles", cfg.cycles);
+            o.put("durationSec", cfg.durationSec);
+
+            JSONArray old = o.optJSONArray("targets");
+            JSONArray out = new JSONArray();
+            for (Target t : cfg.targets) {
+                JSONObject j = null;
+                if (old != null) {
+                    for (int m = 0; m < old.length(); m++) {
+                        JSONObject c = old.optJSONObject(m);
+                        if (c != null && t.id.equals(c.optString("id"))) j = c;
+                    }
+                }
+                if (j == null) j = new JSONObject();
+                j.put("id", t.id);
+                j.put("type", t.type);
+                j.put("x", t.placed() ? Math.round(t.x) : JSONObject.NULL);
+                j.put("y", t.placed() ? Math.round(t.y) : JSONObject.NULL);
+                j.put("x2", t.endPlaced() ? Math.round(t.x2) : JSONObject.NULL);
+                j.put("y2", t.endPlaced() ? Math.round(t.y2) : JSONObject.NULL);
+                j.put("tapMs", t.tapMs);
+                j.put("holdMs", t.holdMs);
+                j.put("swipeMs", t.swipeMs);
+                j.put("delayAfterMs", t.delayAfterMs);
+                j.put("repeat", t.repeat);
+                if (!j.has("label")) j.put("label", "");
+                out.put(j);
+            }
+            o.put("targets", out);
+            String json = all.toString();
+            if (json.length() <= MAX_JSON_CHARS) prefs(ctx).edit().putString(KEY, json).apply();
         } catch (JSONException ignored) {}
     }
 
@@ -133,11 +184,11 @@ final class AutoClickStore {
         c.name = o.optString("name");
         c.mode = "multi".equals(o.optString("mode")) ? "multi" : "single";
         c.intervalMs = clamp(o.optLong("intervalMs", 1000), MIN_INTERVAL_MS, MAX_INTERVAL_MS);
-        c.startDelaySec = (int) clamp(o.optLong("startDelaySec", 3), 0, 60);
+        c.startDelaySec = (int) clamp(o.optLong("startDelaySec", 3), START_DELAY_RANGE[0], START_DELAY_RANGE[1]);
         String stop = o.optString("stop");
         c.stop = "cycles".equals(stop) || "duration".equals(stop) ? stop : "infinite";
-        c.cycles = (int) clamp(o.optLong("cycles", 10), 1, 1_000_000);
-        c.durationSec = (int) clamp(o.optLong("durationSec", 60), 1, 86_400);
+        c.cycles = (int) clamp(o.optLong("cycles", 10), CYCLES_RANGE[0], CYCLES_RANGE[1]);
+        c.durationSec = (int) clamp(o.optLong("durationSec", 60), DURATION_RANGE[0], DURATION_RANGE[1]);
         JSONArray ts = o.optJSONArray("targets");
         if (ts != null) {
             int max = "single".equals(c.mode) ? 1 : MAX_TARGETS;
@@ -152,10 +203,11 @@ final class AutoClickStore {
                 t.y = coord(j, "y");
                 t.x2 = coord(j, "x2");
                 t.y2 = coord(j, "y2");
-                t.holdMs = clamp(j.optLong("holdMs", 600), 100, 10_000);
-                t.swipeMs = clamp(j.optLong("swipeMs", 300), 100, 5_000);
-                t.delayAfterMs = clamp(j.optLong("delayAfterMs", 500), 0, 600_000);
-                t.repeat = (int) clamp(j.optLong("repeat", 1), 1, 1000);
+                t.tapMs = clamp(j.optLong("tapMs", 20), TAP_RANGE[0], TAP_RANGE[1]);
+                t.holdMs = clamp(j.optLong("holdMs", 600), HOLD_RANGE[0], HOLD_RANGE[1]);
+                t.swipeMs = clamp(j.optLong("swipeMs", 300), SWIPE_RANGE[0], SWIPE_RANGE[1]);
+                t.delayAfterMs = clamp(j.optLong("delayAfterMs", 500), DELAY_RANGE[0], DELAY_RANGE[1]);
+                t.repeat = (int) clamp(j.optLong("repeat", 1), REPEAT_RANGE[0], REPEAT_RANGE[1]);
                 c.targets.add(t);
             }
         }

@@ -52,8 +52,20 @@ function NumField({
   onCommit: (n: number) => void
 }) {
   const [text, setText] = useState(String(value))
-  useEffect(() => setText(String(value)), [value])
+  const focused = useRef(false)
+  // Do not rewrite the field while the user is typing in it.
+  useEffect(() => {
+    if (!focused.current) setText(String(value))
+  }, [value])
+  const change = (raw: string) => {
+    setText(raw)
+    // Save as soon as the value is usable: leaving the app without leaving
+    // the field must not lose it.
+    const n = parseInt(raw, 10)
+    if (Number.isFinite(n) && n >= range[0] && n <= range[1] && n !== value) onCommit(n)
+  }
   const commit = () => {
+    focused.current = false
     const n = parseInt(text, 10)
     const v = Number.isFinite(n) ? Math.min(range[1], Math.max(range[0], n)) : value
     setText(String(v))
@@ -67,7 +79,8 @@ function NumField({
       min={range[0]}
       max={range[1]}
       value={text}
-      onChange={(e) => setText(e.target.value)}
+      onChange={(e) => change(e.target.value)}
+      onFocus={() => (focused.current = true)}
       onBlur={commit}
       onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
       className="border-border/50 bg-input text-center font-mono"
@@ -95,6 +108,32 @@ export function AutoClicker() {
   const [error, setError] = useState("")
   const statusRef = useRef(status)
   statusRef.current = status
+
+  // Texts of the native floating panel, in the app language.
+  const panelTexts: Record<string, string> = {
+    ...a.native,
+    macro: a.configs,
+    newMacro: a.single,
+    interval: a.interval,
+    cyclePause: a.cyclePause,
+    startDelay: a.startDelay,
+    stop: a.stopWhen,
+    infinite: a.infinite,
+    cycles: a.cycles,
+    seconds: a.seconds,
+    target: a.targets,
+    action: a.type,
+    tap: a.tap,
+    hold: a.hold,
+    swipe: a.swipe,
+    tapMs: a.tapMs,
+    holdMs: a.holdMs,
+    swipeMs: a.swipeMs,
+    delayAfter: a.delayAfter,
+    repeat: a.repeat,
+  }
+  const textsRef = useRef(panelTexts)
+  textsRef.current = panelTexts
 
   const refresh = useCallback(async () => {
     try {
@@ -128,7 +167,7 @@ export function AutoClicker() {
         const s = statusRef.current
         if (autoClickerAvailable() && s.panelShown && touchedId && s.configId === touchedId) {
           if (next.some((c) => c.id === touchedId)) {
-            await AutoClickerNative.showPanel({ configId: touchedId, texts: a.native })
+            await AutoClickerNative.showPanel({ configId: touchedId, texts: textsRef.current })
           } else {
             await AutoClickerNative.hidePanel()
           }
@@ -138,7 +177,7 @@ export function AutoClicker() {
         setError(e instanceof Error ? e.message : String(e))
       }
     },
-    [a.native]
+    []
   )
 
   const selected = configs.find((c) => c.id === selectedId) ?? null
@@ -182,7 +221,7 @@ export function AutoClicker() {
     setError("")
     try {
       if (status.panelShown && status.configId === selected.id) await AutoClickerNative.hidePanel()
-      else await AutoClickerNative.showPanel({ configId: selected.id, texts: a.native })
+      else await AutoClickerNative.showPanel({ configId: selected.id, texts: panelTexts })
       setStatus(await AutoClickerNative.status())
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -445,6 +484,15 @@ export function AutoClicker() {
                         <option value="swipe">{a.swipe}</option>
                       </select>
                     </Field>
+                    {target.type === "tap" && (
+                      <Field label={a.tapMs}>
+                        <NumField
+                          value={target.tapMs}
+                          range={LIMITS.tapMs}
+                          onCommit={(n) => updateTarget(target.id, { tapMs: n })}
+                        />
+                      </Field>
+                    )}
                     {target.type === "hold" && (
                       <Field label={a.holdMs}>
                         <NumField
@@ -514,6 +562,7 @@ export function AutoClicker() {
                 {panelOnSelected ? a.hidePanel : a.showPanel}
               </Button>
               <p className="text-xs text-muted-foreground">{a.panelHelp}</p>
+              <p className="text-xs text-muted-foreground">{a.speedNote}</p>
               {error && <p className="text-xs text-red-400">{error}</p>}
               <div className="grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
                 <Button

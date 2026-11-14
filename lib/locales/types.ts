@@ -143,6 +143,7 @@ export interface AppText {
     tap: string
     hold: string
     swipe: string
+    tapMs: string
     holdMs: string
     swipeMs: string
     delayAfter: string
@@ -155,6 +156,7 @@ export interface AppText {
     hidePanel: string
     panelHelp: string
     safety: string
+    speedNote: string
     /** Short texts shown on the native floating panel. */
     native: {
       ready: string
