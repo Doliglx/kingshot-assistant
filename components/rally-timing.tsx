@@ -61,7 +61,7 @@ const newId = () =>
 
 const emptyLeader = (): LeaderInput => ({ id: newId(), name: "", march: "" })
 
-const cardCls = "border-border/50 bg-card/80 backdrop-blur"
+const cardCls = "border-border/50 bg-card"
 const titleCls =
   "flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"
 

@@ -117,7 +117,7 @@ export default function KingshotAssistant() {
             type="button"
             onClick={() => setSettingsOpen(true)}
             aria-label={t.common.settings}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground backdrop-blur transition hover:border-primary/40 hover:text-foreground active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground transition hover:border-primary/40 hover:text-foreground active:scale-95"
           >
             <SettingsIcon className="h-5 w-5" />
           </button>
@@ -143,10 +143,10 @@ export default function KingshotAssistant() {
                     type="button"
                     onClick={(e) => open(m.id, e.currentTarget)}
                     style={{ animationDelay: `${i * 45}ms` }}
-                    className="tile-enter group relative flex flex-col items-center gap-3 rounded-2xl last:odd:col-span-2 sm:last:odd:col-span-1 border border-border/50 bg-card/80 px-3 py-5 text-center backdrop-blur transition duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 active:scale-95"
+                    className="tile-enter group relative flex flex-col items-center gap-3 rounded-2xl last:odd:col-span-2 sm:last:odd:col-span-1 border border-border/50 bg-card/80 px-3 py-5 text-center transition duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 active:scale-95"
                   >
                     {m.badge && (
-                      <span className="absolute right-2 top-2 rounded-full border border-primary/50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary">
+                      <span className="absolute right-2 top-2 rounded-full border border-primary/50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
                         {m.badge}
                       </span>
                     )}
@@ -154,7 +154,7 @@ export default function KingshotAssistant() {
                       <Icon className="h-7 w-7" />
                     </span>
                     <span className="text-sm font-bold leading-tight">{label.name}</span>
-                    <span className="text-[11px] leading-snug text-muted-foreground">{label.desc}</span>
+                    <span className="text-xs leading-snug text-muted-foreground">{label.desc}</span>
                   </button>
                 )
               })}
@@ -180,8 +180,7 @@ export default function KingshotAssistant() {
           )}
           style={{ transformOrigin: origin }}
         >
-          <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_30%,color-mix(in_oklch,var(--primary)_10%,transparent),transparent_60%)]" />
-          <div className="sticky top-0 z-10 border-b border-border/50 bg-background/85 backdrop-blur">
+          <div className="sticky top-0 z-10 border-b border-border/50 bg-background/95">
             <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
               <button
                 type="button"

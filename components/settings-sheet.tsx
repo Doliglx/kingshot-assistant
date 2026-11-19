@@ -15,7 +15,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         type="button"
         aria-label={t.common.close}
         onClick={onClose}
-        className="fade-enter absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="fade-enter absolute inset-0 bg-black/60"
       />
       <div
         role="dialog"

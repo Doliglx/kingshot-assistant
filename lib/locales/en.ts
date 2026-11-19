@@ -176,7 +176,7 @@ export const en: AppText = {
     importPlaceholder: "Paste a macro here",
     importError: "Nothing to import: the text is not a macro.",
     positionsNote: "Positions are screen pixels: on a phone with a different screen, move the markers again.",
-    compactHelp: "▾ on the panel folds it down to ▶ ⚙ ✕. 👁 hides every marker in one tap.",
+    compactHelp: "Tap a marker to set that target (action, durations, size). ▾ folds the panel down to ▶ ⚙ ✕, 👁 hides every marker, − removes the last target.",
     tabMacros: "Macros",
     tabEdit: "Edit",
     tabLook: "Look",

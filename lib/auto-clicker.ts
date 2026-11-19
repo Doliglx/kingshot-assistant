@@ -28,6 +28,8 @@ export interface ClickTarget {
   swipeMs: number
   delayAfterMs: number
   repeat: number
+  /** Marker diameter in dp for this target; null = default size from the Look tab. */
+  size: number | null
 }
 
 export interface ClickConfig {
@@ -42,6 +44,9 @@ export interface ClickConfig {
   durationSec: number
   targets: ClickTarget[]
 }
+
+/** Marker diameter in dp. */
+export const MARKER_RANGE = [16, 96] as const
 
 // Hard limits, mirrored in AutoClickStore.java
 export const LIMITS = {
@@ -88,6 +93,7 @@ export function newTarget(label = ""): ClickTarget {
     swipeMs: 300,
     delayAfterMs: 500,
     repeat: 1,
+    size: null,
   }
 }
 
@@ -128,6 +134,7 @@ export function sanitizeConfig(raw: unknown): ClickConfig | null {
       swipeMs: clamp(t.swipeMs, LIMITS.swipeMs, 300),
       delayAfterMs: clamp(t.delayAfterMs, LIMITS.delayAfterMs, 500),
       repeat: clamp(t.repeat, LIMITS.repeat, 1),
+      size: t.size == null ? null : clamp(t.size, MARKER_RANGE, 46),
     }))
   if (targets.length === 0) targets.push(newTarget())
   return {
@@ -251,8 +258,6 @@ export interface Appearance {
   panelOpacity: number
   hideWhileRunning: boolean
 }
-
-export const MARKER_RANGE = [16, 96] as const
 
 export const DEFAULT_APPEARANCE: Appearance = { markerSize: 46, panelOpacity: 94, hideWhileRunning: false }
 

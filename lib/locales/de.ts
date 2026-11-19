@@ -176,7 +176,7 @@ export const de: AppText = {
     importPlaceholder: "Makro hier einfügen",
     importError: "Nichts zu importieren: Der Text ist kein Makro.",
     positionsNote: "Positionen sind Bildschirmpixel: Auf einem Handy mit anderem Bildschirm die Markierungen neu setzen.",
-    compactHelp: "▾ im Panel klappt es auf ▶ ⚙ ✕ zusammen. 👁 blendet alle Markierungen mit einem Tipp aus.",
+    compactHelp: "Tippe auf eine Markierung, um ihr Ziel einzustellen (Aktion, Dauer, Größe). ▾ klappt das Panel auf ▶ ⚙ ✕ zusammen, 👁 blendet alle Markierungen aus, − entfernt das letzte Ziel.",
     tabMacros: "Makros",
     tabEdit: "Bearbeiten",
     tabLook: "Aussehen",

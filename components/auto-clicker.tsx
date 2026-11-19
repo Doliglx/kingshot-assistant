@@ -53,7 +53,7 @@ import {
   type TargetType,
 } from "@/lib/auto-clicker"
 
-const cardCls = "border-border/50 bg-card/80 backdrop-blur"
+const cardCls = "border-border/50 bg-card"
 const titleCls = "flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"
 const selectCls = "h-9 w-full rounded-md border border-border/50 bg-input px-2 text-sm"
 
@@ -247,6 +247,7 @@ export function AutoClicker() {
     hideWhileRunning: a.hideWhileRunning,
     yes: a.yes,
     no: a.no,
+    removeTarget: a.remove,
   }
   const textsRef = useRef(panelTexts)
   textsRef.current = panelTexts
@@ -798,6 +799,13 @@ export function AutoClicker() {
                                 </Field>
                               </>
                             )}
+                            <Field label={`${a.markerSize} (dp)`}>
+                              <NumField
+                                value={target.size ?? appearance.markerSize}
+                                range={MARKER_RANGE}
+                                onCommit={(n) => updateTarget(target.id, { size: n })}
+                              />
+                            </Field>
                           </div>
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-xs text-muted-foreground">

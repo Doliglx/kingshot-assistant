@@ -181,3 +181,13 @@ describe("rally targets", () => {
     assert.equal(msg, "SOUTH TURRET HIT at 16:30:00 UTC\nLaunch your rally at:\n16:29:00 A")
   })
 })
+
+describe("per-target marker size", () => {
+  it("keeps the default (null) or clamps a size of its own", () => {
+    const base = newConfig("Sizes", "multi", ["A", "B", "C"])
+    base.targets[1] = { ...base.targets[1], size: 4 }
+    base.targets[2] = { ...base.targets[2], size: 30 }
+    const c = sanitizeConfig(base)!
+    assert.deepEqual(c.targets.map((t) => t.size), [null, 16, 30])
+  })
+})

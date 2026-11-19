@@ -5,8 +5,8 @@
       <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-  <rect width="180" height="180" rx="40" fill="#090504"/>
-  <rect x="16" y="16" width="148" height="148" rx="30" fill="none" stroke="#ff2b3a" stroke-width="7" filter="url(#glow)"/>
+  <rect width="180" height="180" rx="40" fill="#000000"/>
+  <rect x="16" y="16" width="148" height="148" rx="30" fill="none" stroke="#ffffff" stroke-width="7" filter="url(#glow)"/>
   <text x="90" y="114" text-anchor="middle" font-family="Inter, 'Segoe UI', Arial, sans-serif"
-        font-size="70" font-weight="800" fill="#ffd9dc" stroke="#ff2b3a" stroke-width="2" filter="url(#glow)">KS</text>
+        font-size="70" font-weight="800" fill="#ffffff" stroke="#ffffff" stroke-width="2" filter="url(#glow)">KS</text>
 </svg>

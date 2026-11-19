@@ -176,7 +176,7 @@ export const it: AppText = {
     importPlaceholder: "Incolla qui una macro",
     importError: "Niente da importare: il testo non è una macro.",
     positionsNote: "Le posizioni sono in pixel dello schermo: su un telefono con un altro schermo, riposiziona gli indicatori.",
-    compactHelp: "▾ sul pannello lo riduce a ▶ ⚙ ✕. 👁 nasconde tutti gli indicatori con un tocco.",
+    compactHelp: "Tocca un indicatore per impostare il suo bersaglio (azione, durate, dimensione). ▾ riduce il pannello a ▶ ⚙ ✕, 👁 nasconde tutti gli indicatori, − rimuove l'ultimo bersaglio.",
     tabMacros: "Macro",
     tabEdit: "Modifica",
     tabLook: "Aspetto",

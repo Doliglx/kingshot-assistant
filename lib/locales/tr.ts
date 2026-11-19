@@ -176,7 +176,7 @@ export const tr: AppText = {
     importPlaceholder: "Makroyu buraya yapıştır",
     importError: "İçe aktarılacak bir şey yok: bu metin bir makro değil.",
     positionsNote: "Konumlar ekran pikseli cinsindendir: farklı ekranlı bir telefonda işaretçileri yeniden yerleştir.",
-    compactHelp: "Paneldeki ▾ onu ▶ ⚙ ✕ düğmelerine indirir. 👁 tüm işaretçileri tek dokunuşla gizler.",
+    compactHelp: "Bir işaretçiye dokunarak hedefini ayarla (işlem, süreler, boyut). ▾ paneli ▶ ⚙ ✕ düğmelerine indirir, 👁 tüm işaretçileri gizler, − son hedefi kaldırır.",
     tabMacros: "Makrolar",
     tabEdit: "Düzenle",
     tabLook: "Görünüm",

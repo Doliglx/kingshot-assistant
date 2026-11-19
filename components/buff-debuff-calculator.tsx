@@ -28,7 +28,7 @@ export function BuffDebuffCalculator() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-      <Card className="border-border/50 bg-card/80 backdrop-blur">
+      <Card className="border-border/50 bg-card">
         <CardHeader className="border-b border-border/50 pb-4">
           <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary">
             {t.common.configuration}
@@ -127,7 +127,7 @@ export function BuffDebuffCalculator() {
         </CardContent>
       </Card>
 
-      <Card className="border-primary/30 bg-card/80 backdrop-blur">
+      <Card className="border-primary/30 bg-card">
         <CardHeader className="border-b border-border/50 pb-4">
           <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary">
             {t.common.results}

@@ -177,7 +177,7 @@ export const pt: AppText = {
     importPlaceholder: "Cole uma macro aqui",
     importError: "Nada para importar: o texto não é uma macro.",
     positionsNote: "As posições estão em pixels da tela: em um celular com outra tela, reposicione os marcadores.",
-    compactHelp: "▾ no painel o reduz a ▶ ⚙ ✕. 👁 oculta todos os marcadores com um toque.",
+    compactHelp: "Toque em um marcador para ajustar o alvo (ação, durações, tamanho). ▾ reduz o painel a ▶ ⚙ ✕, 👁 oculta todos os marcadores, − remove o último alvo.",
     tabMacros: "Macros",
     tabEdit: "Editar",
     tabLook: "Aparência",

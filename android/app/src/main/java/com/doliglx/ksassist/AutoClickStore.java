@@ -48,6 +48,7 @@ final class AutoClickStore {
         long swipeMs = 300;
         long delayAfterMs = 500;
         int repeat = 1;
+        int sizeDp = 0; // marker diameter; 0 = default size from the app
 
         boolean placed() {
             return x >= 0 && y >= 0;
@@ -171,6 +172,8 @@ final class AutoClickStore {
                 j.put("swipeMs", t.swipeMs);
                 j.put("delayAfterMs", t.delayAfterMs);
                 j.put("repeat", t.repeat);
+                if (t.sizeDp > 0) j.put("size", t.sizeDp);
+                else j.put("size", JSONObject.NULL);
                 if (!j.has("label")) j.put("label", "");
                 out.put(j);
             }
@@ -260,6 +263,7 @@ final class AutoClickStore {
                 t.swipeMs = clamp(j.optLong("swipeMs", 300), SWIPE_RANGE[0], SWIPE_RANGE[1]);
                 t.delayAfterMs = clamp(j.optLong("delayAfterMs", 500), DELAY_RANGE[0], DELAY_RANGE[1]);
                 t.repeat = (int) clamp(j.optLong("repeat", 1), REPEAT_RANGE[0], REPEAT_RANGE[1]);
+                t.sizeDp = j.isNull("size") ? 0 : (int) clamp(j.optLong("size", 0), MARKER_RANGE[0], MARKER_RANGE[1]);
                 c.targets.add(t);
             }
         }

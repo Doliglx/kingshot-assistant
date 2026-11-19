@@ -111,7 +111,7 @@ export const UI: Record<Lang, UiText> = {
     turret: "Turret",
     turretDir: {"n": "North", "s": "South", "e": "East", "w": "West"},
     guideTitle: "Launching at the exact second",
-    guideSteps: ["In the game, prepare your rally: heroes, troops and rally time (5 min or another).", "Stay on the rally screen. Tap the clock icon (pink circle) to show the game's UTC time.", "The time under Deploy (yellow circle) is your march time: that is the value to enter here.", "Press Deploy at your launch time minus your rally time. With a 5-minute rally, press it 5 minutes before the time shown here.", "Go by the game's UTC clock, not your phone's: the server counts with the game's clock."],
+    guideSteps: ["In the game, prepare your rally: heroes, troops and rally time (5 min or another).", "Stay on the rally screen. Tap the clock icon (pink circle) to show the game's UTC time.", "The time under Deploy (yellow circle) is your march time: that is the value to enter here.", "Press Deploy at your launch time shown here. Every rally leader must pick the same rally time in the game (usually 5 min) so that all rallies land together: check it before each Deploy.", "Go by the game's UTC clock, not your phone's: the server counts with the game's clock."],
     guideHide: "Hide the guide",
     guideShow: "How to launch at the exact second",
     guideAlt: "Rally screen in the game: the clock icon showing UTC time is circled in pink, the march time under Deploy in yellow.",
@@ -119,7 +119,7 @@ export const UI: Record<Lang, UiText> = {
     targetName: "Target name",
     appLanguage: "App language",
     messageLanguage: "Message language",
-    prepNote: "Rally preparation time isn't included: each leader adds it on their own.",
+    prepNote: "All rally leaders must pick the same rally time in the game (usually 5 min) so that everyone lands together. Check it in the game before every Deploy.",
     leaders: "Rally leaders",
     marchHelp:
       "March time shown in game when you tap the target (buffs included): “125”, “2:05” or “2m5s”.",
@@ -210,7 +210,7 @@ export const UI: Record<Lang, UiText> = {
     turret: "Tourelle",
     turretDir: {"n": "Nord", "s": "Sud", "e": "Est", "w": "Ouest"},
     guideTitle: "Lancer à la seconde près",
-    guideSteps: ["Dans le jeu, préparez votre ralliement : héros, troupes et durée de ralliement (5 min ou autre).", "Restez sur l'écran de ralliement. Appuyez sur l'icône horloge (cercle rose) pour afficher l'heure UTC du jeu.", "Le temps sous Deploy (cercle jaune) est votre temps de marche : c'est la valeur à saisir ici.", "Appuyez sur Deploy à votre heure de départ moins la durée du ralliement. Avec un ralliement de 5 min, appuyez 5 minutes avant l'heure affichée ici.", "Fiez-vous à l'horloge UTC du jeu plutôt qu'à celle du téléphone : c'est elle que le serveur utilise."],
+    guideSteps: ["Dans le jeu, préparez votre ralliement : héros, troupes et durée de ralliement (5 min ou autre).", "Restez sur l'écran de ralliement. Appuyez sur l'icône horloge (cercle rose) pour afficher l'heure UTC du jeu.", "Le temps sous Deploy (cercle jaune) est votre temps de marche : c'est la valeur à saisir ici.", "Appuyez sur Deploy à votre heure de départ affichée ici. Tous les rally leaders doivent choisir la même durée de ralliement dans le jeu (généralement 5 min) pour arriver ensemble : vérifiez-la avant chaque Deploy.", "Fiez-vous à l'horloge UTC du jeu plutôt qu'à celle du téléphone : c'est elle que le serveur utilise."],
     guideHide: "Masquer le guide",
     guideShow: "Comment lancer à la seconde près",
     guideAlt: "Écran de ralliement du jeu : l'icône horloge affichant l'heure UTC est entourée en rose, le temps de marche sous Deploy en jaune.",
@@ -218,8 +218,7 @@ export const UI: Record<Lang, UiText> = {
     targetName: "Nom de la cible",
     appLanguage: "Langue de l'application",
     messageLanguage: "Langue du message",
-    prepNote:
-      "Le temps de préparation du ralliement n'est pas compté : chaque leader l'intègre de son côté.",
+    prepNote: "Tous les rally leaders doivent choisir la même durée de ralliement dans le jeu (généralement 5 min) pour arriver ensemble. Vérifiez-la en jeu avant chaque Deploy.",
     leaders: "Rally leaders",
     marchHelp:
       "Temps de marche affiché en jeu sur l'objectif (buffs inclus) : « 125 », « 2:05 » ou « 2m5s ».",
@@ -311,7 +310,7 @@ export const UI: Record<Lang, UiText> = {
     turret: "Turm",
     turretDir: {"n": "Nord", "s": "Süd", "e": "Ost", "w": "West"},
     guideTitle: "Auf die Sekunde genau starten",
-    guideSteps: ["Bereite im Spiel deinen Rally vor: Helden, Truppen und Rally-Dauer (5 Min. oder andere).", "Bleib auf dem Rally-Bildschirm. Tippe auf das Uhr-Symbol (rosa Kreis), um die UTC-Zeit des Spiels anzuzeigen.", "Die Zeit unter Deploy (gelber Kreis) ist deine Marschzeit: Diesen Wert gibst du hier ein.", "Drücke Deploy zu deiner Startzeit minus der Rally-Dauer. Bei einem 5-Minuten-Rally also 5 Minuten vor der hier angezeigten Zeit.", "Richte dich nach der UTC-Uhr des Spiels, nicht nach der deines Handys: Der Server rechnet mit der Spieluhr."],
+    guideSteps: ["Bereite im Spiel deinen Rally vor: Helden, Truppen und Rally-Dauer (5 Min. oder andere).", "Bleib auf dem Rally-Bildschirm. Tippe auf das Uhr-Symbol (rosa Kreis), um die UTC-Zeit des Spiels anzuzeigen.", "Die Zeit unter Deploy (gelber Kreis) ist deine Marschzeit: Diesen Wert gibst du hier ein.", "Drücke Deploy zu deiner hier angezeigten Startzeit. Alle Rally-Leader müssen im Spiel dieselbe Rally-Dauer wählen (meist 5 Min.), damit alle Rallys gleichzeitig ankommen: Prüfe sie vor jedem Deploy.", "Richte dich nach der UTC-Uhr des Spiels, nicht nach der deines Handys: Der Server rechnet mit der Spieluhr."],
     guideHide: "Anleitung ausblenden",
     guideShow: "So startest du auf die Sekunde genau",
     guideAlt: "Rally-Bildschirm im Spiel: Das Uhr-Symbol mit der UTC-Zeit ist rosa eingekreist, die Marschzeit unter Deploy gelb.",
@@ -319,8 +318,7 @@ export const UI: Record<Lang, UiText> = {
     targetName: "Name des Ziels",
     appLanguage: "App-Sprache",
     messageLanguage: "Sprache der Nachricht",
-    prepNote:
-      "Die Vorbereitungszeit des Rallys ist nicht eingerechnet: Jeder Leader plant sie selbst ein.",
+    prepNote: "Alle Rally-Leader müssen im Spiel dieselbe Rally-Dauer wählen (meist 5 Min.), damit alle gleichzeitig ankommen. Prüfe sie im Spiel vor jedem Deploy.",
     leaders: "Rally-Leader",
     marchHelp:
       "Marschzeit, die das Spiel beim Antippen des Ziels anzeigt (inkl. Buffs): „125“, „2:05“ oder „2m5s“.",
@@ -411,7 +409,7 @@ export const UI: Record<Lang, UiText> = {
     turret: "Torreta",
     turretDir: {"n": "Norte", "s": "Sur", "e": "Este", "w": "Oeste"},
     guideTitle: "Lanzar al segundo exacto",
-    guideSteps: ["En el juego, prepara tu rally: héroes, tropas y duración del rally (5 min u otra).", "Quédate en la pantalla del rally. Toca el icono del reloj (círculo rosa) para ver la hora UTC del juego.", "El tiempo bajo Deploy (círculo amarillo) es tu tiempo de marcha: es el valor que debes introducir aquí.", "Pulsa Deploy a tu hora de salida menos la duración del rally. Con un rally de 5 minutos, púlsalo 5 minutos antes de la hora que aparece aquí.", "Guíate por el reloj UTC del juego, no por el del móvil: es el que usa el servidor."],
+    guideSteps: ["En el juego, prepara tu rally: héroes, tropas y duración del rally (5 min u otra).", "Quédate en la pantalla del rally. Toca el icono del reloj (círculo rosa) para ver la hora UTC del juego.", "El tiempo bajo Deploy (círculo amarillo) es tu tiempo de marcha: es el valor que debes introducir aquí.", "Pulsa Deploy a tu hora de salida que aparece aquí. Todos los líderes de rally deben elegir la misma duración de rally en el juego (normalmente 5 min) para llegar a la vez: compruébala antes de cada Deploy.", "Guíate por el reloj UTC del juego, no por el del móvil: es el que usa el servidor."],
     guideHide: "Ocultar la guía",
     guideShow: "Cómo lanzar al segundo exacto",
     guideAlt: "Pantalla de rally del juego: el icono del reloj con la hora UTC está marcado en rosa y el tiempo de marcha bajo Deploy en amarillo.",
@@ -419,8 +417,7 @@ export const UI: Record<Lang, UiText> = {
     targetName: "Nombre del objetivo",
     appLanguage: "Idioma de la app",
     messageLanguage: "Idioma del mensaje",
-    prepNote:
-      "No se cuenta el tiempo de preparación del rally: cada líder lo añade por su cuenta.",
+    prepNote: "Todos los líderes de rally deben elegir la misma duración de rally en el juego (normalmente 5 min) para llegar a la vez. Compruébala en el juego antes de cada Deploy.",
     leaders: "Líderes de rally",
     marchHelp:
       "Tiempo de marcha que muestra el juego al tocar el objetivo (con bonificaciones): «125», «2:05» o «2m5s».",
@@ -511,7 +508,7 @@ export const UI: Record<Lang, UiText> = {
     turret: "Torre",
     turretDir: {"n": "Norte", "s": "Sul", "e": "Leste", "w": "Oeste"},
     guideTitle: "Lançar no segundo exato",
-    guideSteps: ["No jogo, prepare seu rally: heróis, tropas e duração do rally (5 min ou outra).", "Fique na tela do rally. Toque no ícone do relógio (círculo rosa) para ver a hora UTC do jogo.", "O tempo abaixo de Deploy (círculo amarelo) é o seu tempo de marcha: é esse valor que você informa aqui.", "Toque em Deploy no seu horário de saída menos a duração do rally. Com um rally de 5 minutos, toque 5 minutos antes do horário mostrado aqui.", "Use o relógio UTC do jogo, não o do celular: é ele que o servidor usa."],
+    guideSteps: ["No jogo, prepare seu rally: heróis, tropas e duração do rally (5 min ou outra).", "Fique na tela do rally. Toque no ícone do relógio (círculo rosa) para ver a hora UTC do jogo.", "O tempo abaixo de Deploy (círculo amarelo) é o seu tempo de marcha: é esse valor que você informa aqui.", "Toque em Deploy no seu horário de saída mostrado aqui. Todos os líderes de rally precisam escolher a mesma duração de rally no jogo (geralmente 5 min) para chegarem juntos: confira antes de cada Deploy.", "Use o relógio UTC do jogo, não o do celular: é ele que o servidor usa."],
     guideHide: "Ocultar o guia",
     guideShow: "Como lançar no segundo exato",
     guideAlt: "Tela de rally do jogo: o ícone do relógio com a hora UTC está circulado em rosa e o tempo de marcha abaixo de Deploy em amarelo.",
@@ -519,8 +516,7 @@ export const UI: Record<Lang, UiText> = {
     targetName: "Nome do alvo",
     appLanguage: "Idioma do app",
     messageLanguage: "Idioma da mensagem",
-    prepNote:
-      "O tempo de preparação do rally não é contado: cada líder considera isso por conta própria.",
+    prepNote: "Todos os líderes de rally precisam escolher a mesma duração de rally no jogo (geralmente 5 min) para chegarem juntos. Confira no jogo antes de cada Deploy.",
     leaders: "Líderes de rally",
     marchHelp:
       "Tempo de marcha mostrado no jogo ao tocar no alvo (com bônus): “125”, “2:05” ou “2m5s”.",
@@ -612,7 +608,7 @@ export const UI: Record<Lang, UiText> = {
     turret: "Torretta",
     turretDir: {"n": "Nord", "s": "Sud", "e": "Est", "w": "Ovest"},
     guideTitle: "Partire al secondo esatto",
-    guideSteps: ["Nel gioco prepara il tuo rally: eroi, truppe e durata del rally (5 min o altra).", "Resta nella schermata del rally. Tocca l'icona dell'orologio (cerchio rosa) per vedere l'ora UTC del gioco.", "Il tempo sotto Deploy (cerchio giallo) è il tuo tempo di marcia: è il valore da inserire qui.", "Premi Deploy all'ora di partenza meno la durata del rally. Con un rally di 5 minuti, premilo 5 minuti prima dell'ora indicata qui.", "Segui l'orologio UTC del gioco, non quello del telefono: è quello che usa il server."],
+    guideSteps: ["Nel gioco prepara il tuo rally: eroi, truppe e durata del rally (5 min o altra).", "Resta nella schermata del rally. Tocca l'icona dell'orologio (cerchio rosa) per vedere l'ora UTC del gioco.", "Il tempo sotto Deploy (cerchio giallo) è il tuo tempo di marcia: è il valore da inserire qui.", "Premi Deploy all'ora di partenza indicata qui. Tutti i leader dei rally devono scegliere la stessa durata del rally nel gioco (di solito 5 min) per arrivare insieme: controllala prima di ogni Deploy.", "Segui l'orologio UTC del gioco, non quello del telefono: è quello che usa il server."],
     guideHide: "Nascondi la guida",
     guideShow: "Come partire al secondo esatto",
     guideAlt: "Schermata del rally nel gioco: l'icona dell'orologio con l'ora UTC è cerchiata in rosa, il tempo di marcia sotto Deploy in giallo.",
@@ -620,8 +616,7 @@ export const UI: Record<Lang, UiText> = {
     targetName: "Nome del bersaglio",
     appLanguage: "Lingua dell'app",
     messageLanguage: "Lingua del messaggio",
-    prepNote:
-      "Il tempo di preparazione del rally non è incluso: ogni leader lo aggiunge per conto suo.",
+    prepNote: "Tutti i leader dei rally devono scegliere la stessa durata del rally nel gioco (di solito 5 min) per arrivare insieme. Controllala nel gioco prima di ogni Deploy.",
     leaders: "Leader dei rally",
     marchHelp:
       "Tempo di marcia mostrato nel gioco toccando il bersaglio (bonus inclusi): «125», «2:05» o «2m5s».",
@@ -713,7 +708,7 @@ export const UI: Record<Lang, UiText> = {
     turret: "Kule",
     turretDir: {"n": "Kuzey", "s": "Güney", "e": "Doğu", "w": "Batı"},
     guideTitle: "Tam saniyesinde başlatmak",
-    guideSteps: ["Oyunda rally'ni hazırla: kahramanlar, birlikler ve rally süresi (5 dk ya da başka).", "Rally ekranında kal. Oyunun UTC saatini görmek için saat simgesine (pembe daire) dokun.", "Deploy'un altındaki süre (sarı daire) yürüyüş süren: buraya gireceğin değer budur.", "Deploy'a, başlatma saatinden rally süresini çıkardığın anda bas. 5 dakikalık bir rally'de, burada gösterilen saatten 5 dakika önce bas.", "Telefonunun değil, oyunun UTC saatini esas al: sunucu oyunun saatini kullanır."],
+    guideSteps: ["Oyunda rally'ni hazırla: kahramanlar, birlikler ve rally süresi (5 dk ya da başka).", "Rally ekranında kal. Oyunun UTC saatini görmek için saat simgesine (pembe daire) dokun.", "Deploy'un altındaki süre (sarı daire) yürüyüş süren: buraya gireceğin değer budur.", "Deploy'a burada gösterilen başlatma saatinde bas. Tüm rally'lerin aynı anda varması için bütün rally liderleri oyunda aynı rally süresini (genellikle 5 dk) seçmeli: her Deploy'dan önce kontrol et.", "Telefonunun değil, oyunun UTC saatini esas al: sunucu oyunun saatini kullanır."],
     guideHide: "Rehberi gizle",
     guideShow: "Tam saniyesinde nasıl başlatılır",
     guideAlt: "Oyundaki rally ekranı: UTC saatini gösteren saat simgesi pembe, Deploy'un altındaki yürüyüş süresi sarı daire içinde.",
@@ -721,7 +716,7 @@ export const UI: Record<Lang, UiText> = {
     targetName: "Hedef adı",
     appLanguage: "Uygulama dili",
     messageLanguage: "Mesaj dili",
-    prepNote: "Rally hazırlık süresi hesaba katılmaz: her lider bunu kendisi ekler.",
+    prepNote: "Herkesin aynı anda varması için tüm rally liderleri oyunda aynı rally süresini (genellikle 5 dk) seçmeli. Her Deploy'dan önce oyunda kontrol et.",
     leaders: "Rally liderleri",
     marchHelp:
       "Hedefe dokununca oyunda görünen yürüyüş süresi (bonuslar dahil): \"125\", \"2:05\" veya \"2m5s\".",
@@ -810,7 +805,7 @@ export const UI: Record<Lang, UiText> = {
     turret: "Турель",
     turretDir: {"n": "Север", "s": "Юг", "e": "Восток", "w": "Запад"},
     guideTitle: "Запуск секунда в секунду",
-    guideSteps: ["В игре подготовь ралли: герои, войска и время сбора (5 мин или другое).", "Оставайся на экране ралли. Нажми на значок часов (розовый круг), чтобы увидеть время UTC в игре.", "Время под кнопкой Deploy (жёлтый круг) — это время марша: его и нужно ввести здесь.", "Нажми Deploy во время запуска минус время сбора. При сборе 5 минут — за 5 минут до времени, указанного здесь.", "Ориентируйся на часы UTC в игре, а не на часы телефона: сервер считает по игровым часам."],
+    guideSteps: ["В игре подготовь ралли: герои, войска и время сбора (5 мин или другое).", "Оставайся на экране ралли. Нажми на значок часов (розовый круг), чтобы увидеть время UTC в игре.", "Время под кнопкой Deploy (жёлтый круг) — это время марша: его и нужно ввести здесь.", "Нажми Deploy во время запуска, указанное здесь. Все лидеры ралли должны выбрать в игре одинаковое время сбора (обычно 5 мин), чтобы все ралли пришли одновременно: проверяй его перед каждым Deploy.", "Ориентируйся на часы UTC в игре, а не на часы телефона: сервер считает по игровым часам."],
     guideHide: "Скрыть инструкцию",
     guideShow: "Как запустить секунда в секунду",
     guideAlt: "Экран ралли в игре: значок часов со временем UTC обведён розовым, время марша под Deploy — жёлтым.",
@@ -818,7 +813,7 @@ export const UI: Record<Lang, UiText> = {
     targetName: "Название цели",
     appLanguage: "Язык приложения",
     messageLanguage: "Язык сообщения",
-    prepNote: "Время сбора ралли не учитывается: каждый лидер добавляет его сам.",
+    prepNote: "Все лидеры ралли должны выбрать в игре одинаковое время сбора (обычно 5 мин), чтобы все пришли одновременно. Проверяй его в игре перед каждым Deploy.",
     leaders: "Лидеры ралли",
     marchHelp:
       "Время марша, которое игра показывает при нажатии на цель (с бонусами): «125», «2:05» или «2m5s».",

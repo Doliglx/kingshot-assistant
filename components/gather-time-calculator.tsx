@@ -84,7 +84,7 @@ export function GatherTimeCalculator() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-      <Card className="border-border/50 bg-card/80 backdrop-blur lg:col-span-2">
+      <Card className="border-border/50 bg-card lg:col-span-2">
         <CardHeader className="border-b border-border/50 pb-4">
           <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
             <Timer className="h-4 w-4" />
@@ -118,7 +118,7 @@ export function GatherTimeCalculator() {
                       placeholder="00"
                       aria-label={label}
                     />
-                    <p className="mt-1 text-center text-[10px] uppercase text-muted-foreground">{label}</p>
+                    <p className="mt-1 text-center text-[11px] uppercase text-muted-foreground">{label}</p>
                   </div>
                 ))}
               </div>
@@ -208,7 +208,7 @@ export function GatherTimeCalculator() {
       </Card>
 
       {/* Current speed */}
-      <Card className="border-border/50 bg-card/80 backdrop-blur">
+      <Card className="border-border/50 bg-card">
         <CardHeader className="border-b border-border/50 pb-4">
           <CardTitle className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <span className="flex items-center gap-2">
@@ -236,7 +236,7 @@ export function GatherTimeCalculator() {
       </Card>
 
       {/* With the extra bonus */}
-      <Card className="border-primary/40 bg-card/80 backdrop-blur">
+      <Card className="border-primary/40 bg-card">
         <CardHeader className="border-b border-border/50 pb-4">
           <CardTitle className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-primary">
             <span className="flex items-center gap-2">
