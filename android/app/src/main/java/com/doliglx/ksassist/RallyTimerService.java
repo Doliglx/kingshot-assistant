@@ -61,7 +61,7 @@ public class RallyTimerService extends Service {
 
     /** Clés des textes traduits envoyés par l'application. */
     static final String[] TEXT_KEYS = {
-        "start", "launchIn", "go", "goNotif", "tapStart", "stop", "me", "channel", "modeLabel"
+        "start", "launchIn", "go", "goNotif", "tapStart", "stop", "me", "channel", "modeLabel", "accent"
     };
     // Textes par défaut (anglais), remplacés par ceux de la langue choisie
     private String tStart = "START (1st launches)";
@@ -73,6 +73,8 @@ public class RallyTimerService extends Service {
     private String tMe = "Me";
     private String tChannel = "Rally countdown";
     private String tModeLabel = "Exact UTC";
+    /** Accent colour picked in the app settings. */
+    private int accent = ORANGE;
 
     static boolean isRunning() {
         return running;
@@ -144,6 +146,8 @@ public class RallyTimerService extends Service {
             tMe = textExtra(intent, "me", tMe);
             tChannel = textExtra(intent, "channel", tChannel);
             tModeLabel = textExtra(intent, "modeLabel", "quick".equals(mode) ? "Quick Sync" : "Exact UTC");
+            accent = AutoClickService.parseColor(intent.getStringExtra("t_accent"), ORANGE);
+            if (root != null) removeOverlay(); // rebuilt below with the current colour
             goFired = false;
             lastAlertSecond = Integer.MAX_VALUE;
             if ("quick".equals(mode)) {
@@ -372,7 +376,7 @@ public class RallyTimerService extends Service {
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(BG);
         bg.setCornerRadius(dp(18));
-        bg.setStroke(dp(2), ORANGE);
+        bg.setStroke(dp(2), accent);
         root.setBackground(bg);
         root.setPadding(dp(12), dp(8), dp(12), dp(10));
 
@@ -397,7 +401,7 @@ public class RallyTimerService extends Service {
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setOnTouchListener(new DragListener(false));
         TextView title = new TextView(this);
-        title.setTextColor(ORANGE);
+        title.setTextColor(accent);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         title.setTag("title");
@@ -426,7 +430,7 @@ public class RallyTimerService extends Service {
         startBtn.setTextColor(Color.WHITE);
         startBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         GradientDrawable sb = new GradientDrawable();
-        sb.setColor(ORANGE);
+        sb.setColor(accent);
         sb.setCornerRadius(dp(12));
         startBtn.setBackground(sb);
         startBtn.setOnClickListener(v -> pressStart());

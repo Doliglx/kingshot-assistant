@@ -34,6 +34,7 @@ Everything is built around how the game is actually played: you type the numbers
 
 Two ways to coordinate, sharing the same list of leaders and march times:
 
+- **Targets** — the castle, one of the four turrets (north, south, east, west), or any name you type.
 - **Exact UTC** — you set the arrival time; each leader gets a launch time (`arrival − march time`). The app does not trust the phone's clock: it measures its offset against an external time source, keeps the best of several samples, and shows the remaining uncertainty (`Synced ± 12 ms`).
 - **Quick Sync** — no clock at all. The leader with the longest march launches first; everyone else launches a fixed number of seconds later. Good enough to ±1 s, and much easier to explain in chat.
 
@@ -59,7 +60,7 @@ A floating panel with numbered markers you drag onto the buttons you want presse
 - Everything is adjustable from the floating panel itself (⚙), which also folds down to a small floating button and shows the tap count and elapsed time while running.
 - Macros can be copied as text and imported on another phone.
 - Stops after a number of cycles, after a duration, or when you press stop. It also stops by itself when the screen turns off or the phone rotates.
-- A *batch healing* template is included: two targets, looped.
+- Ready-made macros: *batch healing* (one target every 20 ms) and *Terror* (a Terror rally every 2 minutes).
 
 > [!WARNING]
 > Most games forbid automation in their terms of service. The auto clicker is a general-purpose tool; using it in a game is at your own risk and can get an account sanctioned.

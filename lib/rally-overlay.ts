@@ -23,6 +23,8 @@ export interface RallyOverlayPlugin {
       me: string
       channel: string
       modeLabel: string
+      /** Accent colour, "#rrggbb". */
+      accent: string
     }
   }): Promise<{ overlay: boolean }>
   stop(): Promise<void>

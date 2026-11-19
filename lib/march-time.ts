@@ -4,7 +4,7 @@
 // - Exact UTC  : départ_i = T − marche_i (heure absolue)
 // - Quick Sync : décalage_i = marche_max − marche_i (relatif au 1er lancement)
 
-import { MESSAGES, type Lang } from "./messages"
+import { MESSAGES, type Lang, type Turret } from "./messages"
 
 const DAY_MS = 24 * 3600 * 1000
 
@@ -186,11 +186,31 @@ const CASTLE_NAMES = new Set([
   "castello", "kale", "замок",
 ])
 
-/** « CASTLE HIT » / « ATTAQUE DU CHÂTEAU » / « NORTH TOWER HIT »… */
+/** Preset values stored for the four turrets (also accepted when typed). */
+export const TURRET_TARGETS: Record<Turret, string> = {
+  n: "North Turret",
+  s: "South Turret",
+  e: "East Turret",
+  w: "West Turret",
+}
+
+/** Which turret a target name designates, if any. */
+export function turretOf(target: string): Turret | null {
+  const name = target.trim().toLowerCase()
+  for (const [dir, preset] of Object.entries(TURRET_TARGETS) as [Turret, string][]) {
+    if (preset.toLowerCase() === name) return dir
+  }
+  return null
+}
+
+/** « CASTLE HIT » / « ATTAQUE DE LA TOURELLE NORD » / « MY TARGET HIT »… */
 export function targetTitle(target: string, lang: MessageLang): string {
   const name = target.trim() || "Castle"
   const m = MESSAGES[lang]
-  return CASTLE_NAMES.has(name.toLowerCase()) ? m.castle : m.target(name.toUpperCase())
+  if (CASTLE_NAMES.has(name.toLowerCase())) return m.castle
+  const turret = turretOf(name)
+  if (turret) return m.turret[turret]
+  return m.target(name.toUpperCase())
 }
 
 /** Titre Exact UTC : « CASTLE HIT at 12:30:00 UTC ». */

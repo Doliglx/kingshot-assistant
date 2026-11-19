@@ -177,6 +177,23 @@ export interface AppText {
     importError: string
     positionsNote: string
     compactHelp: string
+    tabMacros: string
+    tabEdit: string
+    tabLook: string
+    tabShare: string
+    general: string
+    templates: string
+    healHelp: string
+    terrorTemplate: string
+    terrorName: string
+    terrorHelp: string
+    about: string
+    editHint: string
+    unitMs: string
+    unitS: string
+    unitMin: string
+    waitShort: string
+    targetsCount: string
     /** Short texts shown on the native floating panel. */
     native: {
       ready: string

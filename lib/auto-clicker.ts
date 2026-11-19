@@ -169,6 +169,46 @@ export function cycleDurationMs(c: ClickConfig): number {
 }
 
 // ---------------------------------------------------------------------
+// Ready-made macros
+
+/** One target tapped every 20 ms: the heal button during batch healing. */
+export function healingTemplate(name: string, label: string): ClickConfig {
+  const c = newConfig(name, "single", [label])
+  c.intervalMs = 20
+  c.targets[0] = { ...c.targets[0], label, tapMs: 20 }
+  return c
+}
+
+/**
+ * Terror rallies, one every 2 minutes: search, pick the Terror, rally, confirm…
+ * then wait 2 minutes on the last step. Positions were recorded on a
+ * 1080 × 2340 screen; on another screen, move the markers once.
+ */
+const TERROR_STEPS: Array<[x: number, y: number, label: string, tapMs: number, delayAfterMs: number]> = [
+  [66, 1736, "Loupe", 20, 900],
+  [394, 1788, "", 20, 900],
+  [576, 2247, "", 20, 900],
+  [550, 1228, "", 20, 900],
+  [551, 960, "", 20, 900],
+  [567, 1513, "", 20, 900],
+  [780, 271, "", 20, 900],
+  [861, 2245, "", 500, 120_000],
+]
+
+export function terrorTemplate(name: string): ClickConfig {
+  const c = newConfig(name, "multi")
+  c.intervalMs = 1000
+  c.targets = TERROR_STEPS.map(([x, y, label, tapMs, delayAfterMs]) => ({
+    ...newTarget(label),
+    x,
+    y,
+    tapMs,
+    delayAfterMs,
+  }))
+  return c
+}
+
+// ---------------------------------------------------------------------
 // Sharing macros
 
 const EXPORT_KIND = "kingshot-assistant/macro"
@@ -205,18 +245,27 @@ export function importConfigs(text: string): ClickConfig[] | null {
 // Appearance of the markers and of the floating panel (shared by all macros)
 
 export interface Appearance {
-  markerSize: "s" | "m" | "l"
+  /** Marker diameter in dp. */
+  markerSize: number
   /** Percent. */
   panelOpacity: number
   hideWhileRunning: boolean
 }
 
-export const DEFAULT_APPEARANCE: Appearance = { markerSize: "m", panelOpacity: 94, hideWhileRunning: false }
+export const MARKER_RANGE = [16, 96] as const
+
+export const DEFAULT_APPEARANCE: Appearance = { markerSize: 46, panelOpacity: 94, hideWhileRunning: false }
+
+// Older versions stored the marker size as "s", "m" or "l".
+const LEGACY_MARKER: Record<string, number> = { s: 34, m: 46, l: 60 }
 
 export function sanitizeAppearance(raw: unknown): Appearance {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>
   return {
-    markerSize: o.markerSize === "s" || o.markerSize === "l" ? o.markerSize : "m",
+    markerSize:
+      typeof o.markerSize === "string" && o.markerSize in LEGACY_MARKER
+        ? LEGACY_MARKER[o.markerSize]
+        : clamp(o.markerSize, MARKER_RANGE, DEFAULT_APPEARANCE.markerSize),
     panelOpacity: clamp(o.panelOpacity, [30, 100], DEFAULT_APPEARANCE.panelOpacity),
     hideWhileRunning: o.hideWhileRunning === true,
   }

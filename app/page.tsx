@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useSettings } from "@/components/app-settings"
 import { SettingsSheet } from "@/components/settings-sheet"
+import { AppLogo } from "@/components/app-logo"
 import { ResourceCalculator } from "@/components/resource-calculator"
 import { Frakinator } from "@/components/frakinator"
 import { RatioCalculator } from "@/components/ratio-calculator"
@@ -123,7 +124,8 @@ export default function KingshotAssistant() {
         </div>
 
         <div className="flex flex-1 flex-col justify-center gap-8 pb-10">
-          <header className="text-center">
+          <header className="flex flex-col items-center text-center">
+            <AppLogo className="mb-5 h-20 w-20" />
             <h1 className="bg-gradient-to-b from-foreground to-primary bg-clip-text text-3xl font-black uppercase tracking-tight text-transparent sm:text-4xl">
               KingShot Assistant
             </h1>
@@ -160,8 +162,12 @@ export default function KingshotAssistant() {
           )}
         </div>
 
-        <footer className="text-center">
-          <p className="text-xs text-muted-foreground">KingShot Assistant · #Doliprane · GLX</p>
+        <footer className="space-y-1 text-center">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Kingshot Assistant</p>
+          <p className="text-xs text-muted-foreground">
+            Made with <span aria-label="love">❤️</span> by
+          </p>
+          <p className="neon-accent text-base font-black tracking-wide">Doliprane · Kingdom 1167</p>
         </footer>
       </div>
 

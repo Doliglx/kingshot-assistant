@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
   AlertTriangle,
+  BookOpen,
   Check,
   Clock,
   Copy,
   Crosshair,
+  EyeOff,
   Layers,
   Play,
   Plus,
@@ -34,11 +36,13 @@ import {
   parseDuration,
   parseTimeOfDay,
   resolveArrival,
+  TURRET_TARGETS,
+  turretOf,
   type LeaderInput,
 } from "@/lib/march-time"
-import { LANGS, LANG_NAMES, isLang, type Lang } from "@/lib/messages"
+import { LANGS, LANG_NAMES, TURRETS, isLang, type Lang } from "@/lib/messages"
 import type { UiText } from "@/lib/i18n"
-import { useSettings } from "@/components/app-settings"
+import { accentHex, useSettings } from "@/components/app-settings"
 import { monotonicNow } from "@/lib/utc-clock"
 import { useUtcClock, type UtcClock } from "@/lib/use-utc-clock"
 import { copyText } from "@/lib/clipboard"
@@ -46,7 +50,7 @@ import { alertTick, unlockAudio } from "@/lib/alerts"
 import { RallyOverlay, floatingAvailable } from "@/lib/rally-overlay"
 
 const STORAGE_KEY = "ks-assist-rally-v1"
-const TARGET_PRESETS = ["Castle", "North Tower", "South Tower"]
+const GUIDE_KEY = "ks-assist-rally-guide-hidden"
 
 type Tab = "utc" | "quick"
 
@@ -199,19 +203,40 @@ export function RallyTiming() {
               placeholder="Castle"
               className="border-border/50 bg-input text-lg"
             />
-            <div className="flex flex-wrap gap-2">
-              {TARGET_PRESETS.map((p) => (
-                <Button
-                  key={p}
-                  type="button"
-                  size="sm"
-                  variant={target === p ? "default" : "outline"}
-                  onClick={() => setTarget(p)}
-                >
-                  {p}
-                </Button>
-              ))}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={target === "Castle" ? "default" : "outline"}
+                onClick={() => setTarget("Castle")}
+              >
+                {t.castle}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={turretOf(target) ? "default" : "outline"}
+                onClick={() => !turretOf(target) && setTarget(TURRET_TARGETS.n)}
+              >
+                {t.turret}
+              </Button>
             </div>
+            {turretOf(target) && (
+              <div className="grid grid-cols-4 gap-2">
+                {TURRETS.map((dir) => (
+                  <Button
+                    key={dir}
+                    type="button"
+                    size="sm"
+                    variant={turretOf(target) === dir ? "default" : "outline"}
+                    onClick={() => setTarget(TURRET_TARGETS[dir])}
+                    className="px-1"
+                  >
+                    {t.turretDir[dir]}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor="msg-lang" className="text-xs text-muted-foreground">
@@ -397,6 +422,7 @@ function ExactUtcTab({
 
   return (
     <div className="space-y-6">
+      <LaunchGuide t={t} />
       {/* Horloge UTC */}
       <Card className={cardCls}>
         <CardContent className="flex flex-col items-center gap-3 py-6">
@@ -550,25 +576,82 @@ function ExactUtcTab({
         </CardContent>
       </Card>
 
-      <FloatingPanel
-        t={t}
-        mode="utc"
-        meName={me?.name ?? null}
-        disabledReason={!me ? t.chooseMe : me.departMs <= now ? t.ownPassed : null}
-        params={
-          me
-            ? {
-                key: `${me.id}|${me.departMs}`,
-                delayMs: me.departMs - now,
-                subtitle: t.departAt(formatUtc(me.departMs)),
-                precision: precisionLabel(clock, t),
-              }
-            : null
-        }
-      />
-
       <MessageCard t={t} message={message} />
     </div>
+  )
+}
+
+/**
+ * How a leader launches on time in the game itself, with an annotated
+ * screenshot. Can be folded away; the choice is remembered.
+ */
+function LaunchGuide({ t }: { t: UiText }) {
+  const [hidden, setHidden] = useState(false)
+  useEffect(() => {
+    try {
+      setHidden(localStorage.getItem(GUIDE_KEY) === "1")
+    } catch {
+      // storage unavailable
+    }
+  }, [])
+  const toggle = (value: boolean) => {
+    setHidden(value)
+    try {
+      localStorage.setItem(GUIDE_KEY, value ? "1" : "0")
+    } catch {
+      // ignore
+    }
+  }
+
+  if (hidden) {
+    return (
+      <button
+        type="button"
+        onClick={() => toggle(false)}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/50 bg-card/80 px-4 py-3 text-sm text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+      >
+        <BookOpen className="h-4 w-4 text-primary" />
+        {t.guideShow}
+      </button>
+    )
+  }
+
+  return (
+    <Card className={cn(cardCls, "border-primary/40")}>
+      <CardHeader className="border-b border-border/50 pb-4">
+        <CardTitle className={cn(titleCls, "justify-between")}>
+          <span className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            {t.guideTitle}
+          </span>
+          <Button type="button" size="sm" variant="outline" onClick={() => toggle(true)}>
+            <EyeOff className="h-4 w-4" />
+            {t.guideHide}
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4 pt-6 sm:grid-cols-[minmax(0,220px)_1fr]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static export, image already optimised */}
+        <img
+          src="/images/rally-guide.webp"
+          alt={t.guideAlt}
+          width={540}
+          height={1170}
+          loading="lazy"
+          className="mx-auto w-full max-w-[220px] rounded-xl border border-border/50"
+        />
+        <ol className="space-y-3 text-sm">
+          {t.guideSteps.map((step, i) => (
+            <li key={i} className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                {i + 1}
+              </span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -825,6 +908,7 @@ function FloatingPanel({
     precision: string
   } | null
 }) {
+  const { hue } = useSettings()
   const [native, setNative] = useState(false)
   const [overlay, setOverlay] = useState<boolean | null>(null)
   const [active, setActive] = useState(false)
@@ -864,7 +948,7 @@ function FloatingPanel({
         precision: params.precision,
         delayMs: params.delayMs,
         offsetMs: params.offsetMs,
-        texts: { ...t.native, modeLabel: mode === "utc" ? "Exact UTC" : "Quick Sync" },
+        texts: { ...t.native, modeLabel: mode === "utc" ? "Exact UTC" : "Quick Sync", accent: accentHex(hue) },
       })
       sentKey.current = params.key
       setActive(true)
@@ -872,7 +956,7 @@ function FloatingPanel({
     } catch (e) {
       setInfo(t.error(e instanceof Error ? e.message : String(e)))
     }
-  }, [mode, meName, params, t])
+  }, [mode, meName, params, t, hue])
 
   // Bulle active et calcul modifié (heure d'arrivée, marche…) → mise à jour
   useEffect(() => {

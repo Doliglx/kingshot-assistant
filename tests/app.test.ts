@@ -7,9 +7,12 @@ import {
   importConfigs,
   newConfig,
   parseConfigs,
+  healingTemplate,
   sanitizeAppearance,
   sanitizeConfig,
+  terrorTemplate,
 } from "../lib/auto-clicker"
+import { buildMessage as rallyMessage, computePlan, targetTitle } from "../lib/march-time"
 import { UI } from "../lib/i18n"
 import { APP_TEXT } from "../lib/locales"
 import { LANGS } from "../lib/messages"
@@ -129,10 +132,52 @@ describe("auto clicker: simultaneous mode, sharing, appearance", () => {
 
   it("clamps the appearance settings", () => {
     assert.deepEqual(sanitizeAppearance({ markerSize: "xxl", panelOpacity: 5, hideWhileRunning: "yes" }), {
-      markerSize: "m",
+      markerSize: 46,
       panelOpacity: 30,
       hideWhileRunning: false,
     })
     assert.equal(sanitizeAppearance(null).panelOpacity, 94)
+    assert.equal(sanitizeAppearance({ markerSize: 4 }).markerSize, 16)
+    assert.equal(sanitizeAppearance({ markerSize: 22 }).markerSize, 22)
+    assert.equal(sanitizeAppearance({ markerSize: "s" }).markerSize, 34)
+  })
+})
+
+describe("ready-made macros", () => {
+  it("batch healing is one target tapped every 20 ms", () => {
+    const c = healingTemplate("Batch healing", "Heal")
+    assert.equal(c.mode, "single")
+    assert.equal(c.targets.length, 1)
+    assert.equal(c.intervalMs, 20)
+    assert.equal(c.targets[0].tapMs, 20)
+    assert.deepEqual(sanitizeConfig(c), c)
+  })
+
+  it("Terror matches the shared configuration: 8 steps, 2 minutes on the last one", () => {
+    const c = terrorTemplate("Terror")
+    assert.equal(c.mode, "multi")
+    assert.equal(c.targets.length, 8)
+    assert.deepEqual(c.targets.map((t) => [t.x, t.y]), [
+      [66, 1736], [394, 1788], [576, 2247], [550, 1228], [551, 960], [567, 1513], [780, 271], [861, 2245],
+    ])
+    assert.equal(c.targets[0].label, "Loupe")
+    assert.equal(c.targets[7].tapMs, 500)
+    assert.equal(c.targets[7].delayAfterMs, 120_000)
+    assert.ok(c.targets.slice(0, 7).every((t) => t.delayAfterMs === 900 && t.tapMs === 20))
+    assert.deepEqual(sanitizeConfig(c), c)
+  })
+})
+
+describe("rally targets", () => {
+  it("names the four turrets in every message language", () => {
+    assert.equal(targetTitle("North Turret", "en"), "NORTH TURRET HIT")
+    assert.equal(targetTitle("west turret", "fr"), "ATTAQUE DE LA TOURELLE OUEST")
+    assert.equal(targetTitle("East Turret", "de"), "ANGRIFF AUF DEN OSTTURM")
+    assert.equal(targetTitle("South Turret", "ru"), "АТАКА НА ЮЖНУЮ ТУРЕЛЬ")
+    assert.equal(targetTitle("Castle", "en"), "CASTLE HIT")
+    assert.equal(targetTitle("Sanctuary", "en"), "SANCTUARY HIT")
+    const arrival = Date.UTC(2026, 10, 19, 16, 30, 0)
+    const msg = rallyMessage("South Turret", arrival, computePlan([{ id: "a", name: "A", march: "1:00" }], arrival), "en")
+    assert.equal(msg, "SOUTH TURRET HIT at 16:30:00 UTC\nLaunch your rally at:\n16:29:00 A")
   })
 })

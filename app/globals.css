@@ -250,3 +250,71 @@
   border: 3px solid white;
   background: var(--primary);
 }
+
+/* ------------------------------------------------------------------
+   Neon effects
+   ------------------------------------------------------------------ */
+
+/* Footer signature: follows the accent colour picked in the settings. */
+.neon-accent {
+  color: color-mix(in oklch, var(--primary) 35%, white);
+  text-shadow:
+    0 0 4px var(--primary),
+    0 0 10px var(--primary),
+    0 0 22px var(--primary),
+    0 0 40px color-mix(in oklch, var(--primary) 60%, transparent);
+  animation: neon-pulse 2.8s ease-in-out infinite;
+}
+
+/* App logo: always red, like the launcher icon. */
+.neon-logo {
+  --neon: #ff2b3a;
+  color: #ffd9dc;
+  border-color: var(--neon);
+  text-shadow:
+    0 0 4px var(--neon),
+    0 0 12px var(--neon),
+    0 0 26px var(--neon);
+  box-shadow:
+    0 0 6px var(--neon),
+    0 0 18px color-mix(in srgb, var(--neon) 70%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--neon) 45%, transparent);
+  animation: neon-flicker 5s linear infinite;
+}
+
+@keyframes neon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.88;
+    filter: brightness(1.25);
+  }
+}
+
+/* Mostly steady, with a short flicker like a real neon tube. */
+@keyframes neon-flicker {
+  0%,
+  18%,
+  22%,
+  25%,
+  53%,
+  57%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  24%,
+  55% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-accent,
+  .neon-logo {
+    animation: none;
+  }
+}

@@ -1,6 +1,12 @@
 <svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
-  <rect width="180" height="180" rx="36" fill="#090504"/>
-  <rect x="6" y="6" width="168" height="168" rx="31" fill="none" stroke="#fa5d36" stroke-width="6"/>
-  <text x="90" y="116" text-anchor="middle" font-family="Inter, 'Segoe UI', Arial, sans-serif"
-        font-size="76" font-weight="800" fill="#fa5d36">KS</text>
+  <defs>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="180" height="180" rx="40" fill="#090504"/>
+  <rect x="16" y="16" width="148" height="148" rx="30" fill="none" stroke="#ff2b3a" stroke-width="7" filter="url(#glow)"/>
+  <text x="90" y="114" text-anchor="middle" font-family="Inter, 'Segoe UI', Arial, sans-serif"
+        font-size="70" font-weight="800" fill="#ffd9dc" stroke="#ff2b3a" stroke-width="2" filter="url(#glow)">KS</text>
 </svg>

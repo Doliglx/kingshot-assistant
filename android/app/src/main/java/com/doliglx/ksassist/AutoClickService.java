@@ -81,6 +81,10 @@ public class AutoClickService extends AccessibilityService {
     private TextView compactBtn;
     private final List<View> fullOnly = new ArrayList<>();
     private boolean compact = false;
+    private boolean markersHidden = false;
+    private TextView eyeBtn;
+    /** Accent colour of the app, sent with the texts ("accent": "#rrggbb"). */
+    private int accent = ORANGE;
     private AutoClickStore.Appearance appearance = new AutoClickStore.Appearance();
     private final List<Runnable> refreshers = new ArrayList<>();
 
@@ -201,6 +205,7 @@ public class AutoClickService extends AccessibilityService {
         AutoClickStore.Config loaded = AutoClickStore.load(this, configId);
         if (loaded == null) return false;
         if (newTexts != null) texts.putAll(newTexts);
+        accent = parseColor(texts.get("accent"), ORANGE);
         boolean settingsOpen = settings != null && settings.getVisibility() == View.VISIBLE;
         int x = panelParams != null ? panelParams.x : dp(12);
         int y = panelParams != null ? panelParams.y : dp(96);
@@ -457,26 +462,27 @@ public class AutoClickService extends AccessibilityService {
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(PANEL_BG);
         bg.setCornerRadius(dp(22));
-        bg.setStroke(dp(2), ORANGE);
+        bg.setStroke(dp(2), accent);
         panel.setBackground(bg);
-        panel.setPadding(dp(6), dp(4), dp(6), dp(4));
+        panel.setPadding(dp(4), dp(2), dp(4), dp(2));
 
         fullOnly.clear();
         bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
 
-        playBtn = iconButton("▶", ORANGE);
-        // Stops on touch-down: while a fast macro runs, a full click may never complete.
+        // Every button also drags the panel: move the finger, it follows.
+        playBtn = iconButton("▶", accent);
+        DragOrClick playDrag = new DragOrClick(() -> {
+            if (!running) startRun();
+        });
+        // While running, stop on touch-down: during a fast macro a full click may never complete.
         playBtn.setOnTouchListener((v, e) -> {
             if (running && e.getActionMasked() == MotionEvent.ACTION_DOWN) {
                 stopRun(t("ready"));
                 return true;
             }
-            return running;
-        });
-        playBtn.setOnClickListener(v -> {
-            if (!running) startRun();
+            return running || playDrag.onTouch(v, e);
         });
         bar.addView(playBtn);
 
@@ -484,41 +490,44 @@ public class AutoClickService extends AccessibilityService {
         statusView.setTextColor(Color.WHITE);
         statusView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         statusView.setTypeface(Typeface.DEFAULT_BOLD);
-        statusView.setPadding(dp(8), dp(10), dp(8), dp(10));
-        statusView.setMinWidth(dp(84));
+        statusView.setPadding(dp(6), dp(10), dp(6), dp(10));
+        statusView.setMinWidth(dp(64));
+        statusView.setMaxWidth(dp(110));
         statusView.setMaxLines(1);
         statusView.setEllipsize(TextUtils.TruncateAt.END);
         statusView.setText(t("ready"));
-        statusView.setOnTouchListener(new PanelDrag());
-        bar.addView(statusView, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        statusView.setOnTouchListener(new DragOrClick(null));
+        bar.addView(statusView);
+        fullOnly.add(statusView);
 
-        TextView gear = iconButton("⚙", Color.WHITE);
-        gear.setOnClickListener(v -> toggleSettings());
-        bar.addView(gear);
-        fullOnly.add(gear);
+        eyeBtn = barButton("👁", Color.WHITE, () -> setMarkersHidden(!markersHidden));
+        fullOnly.add(eyeBtn);
+        fullOnly.add(barButton("＋", Color.WHITE, this::addTarget));
 
-        TextView add = iconButton("＋", Color.WHITE);
-        add.setOnClickListener(v -> addTarget());
-        bar.addView(add);
-        fullOnly.add(add);
+        // In the folded panel the gear unfolds it and opens the settings.
+        barButton("⚙", Color.WHITE, () -> {
+            if (compact) {
+                setCompact(false);
+                if (settings != null && !running) settings.setVisibility(View.VISIBLE);
+                refreshSettings();
+            } else {
+                toggleSettings();
+            }
+        });
+        compactBtn = barButton("▾", MUTED, () -> setCompact(true));
+        fullOnly.add(compactBtn);
+        barButton("✕", MUTED, this::hidePanel);
 
-        TextView close = iconButton("✕", MUTED);
-        close.setOnClickListener(v -> hidePanel());
-        bar.addView(close);
-        fullOnly.add(close);
-
-        // Folds the panel down to a small floating button (play + status).
-        compactBtn = iconButton("◂", MUTED);
-        compactBtn.setOnClickListener(v -> setCompact(!compact));
-        bar.addView(compactBtn);
-
-        panel.addView(bar, new LinearLayout.LayoutParams(dp(300), LinearLayout.LayoutParams.WRAP_CONTENT));
+        panel.addView(bar, new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
 
         buildSettings();
         settings.setVisibility(settingsOpen ? View.VISIBLE : View.GONE);
         panel.addView(settings, new LinearLayout.LayoutParams(dp(300), LinearLayout.LayoutParams.WRAP_CONTENT));
         panel.setAlpha(appearance.panelOpacity / 100f);
         if (compact) setCompact(true);
+        updateEye();
 
         panelParams = overlayParams(true);
         panelParams.x = x;
@@ -534,24 +543,27 @@ public class AutoClickService extends AccessibilityService {
         TextView b = new TextView(this);
         b.setText(symbol);
         b.setTextColor(color);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19);
         b.setGravity(Gravity.CENTER);
-        b.setMinWidth(dp(42));
+        b.setMinWidth(dp(40));
         b.setMinHeight(dp(44));
         return b;
     }
 
+    /** A bar button that runs its action on tap and drags the panel when moved. */
+    private TextView barButton(String symbol, int color, Runnable action) {
+        TextView b = iconButton(symbol, color);
+        b.setOnTouchListener(new DragOrClick(action));
+        bar.addView(b);
+        return b;
+    }
+
+    /** Folded: only ▶, ⚙ and ✕ stay visible. */
     private void setCompact(boolean on) {
         compact = on;
         if (bar == null) return;
         for (View v : fullOnly) v.setVisibility(on ? View.GONE : View.VISIBLE);
         if (on && settings != null) settings.setVisibility(View.GONE);
-        if (compactBtn != null) compactBtn.setText(on ? "▸" : "◂");
-        if (statusView != null) statusView.setMinWidth(dp(on ? 56 : 84));
-        bar.setLayoutParams(new LinearLayout.LayoutParams(
-            on ? LinearLayout.LayoutParams.WRAP_CONTENT : dp(300),
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
     }
 
     private void toggleSettings() {
@@ -560,28 +572,57 @@ public class AutoClickService extends AccessibilityService {
         refreshSettings();
     }
 
-    private class PanelDrag implements View.OnTouchListener {
+    /** Hides every marker in one tap; hidden markers let touches through to the app below. */
+    private void setMarkersHidden(boolean hidden) {
+        markersHidden = hidden;
+        for (Marker m : markers) m.applyState();
+        updateEye();
+    }
+
+    private void updateEye() {
+        if (eyeBtn != null) eyeBtn.setAlpha(markersHidden ? 0.4f : 1f);
+    }
+
+    /** Tap → action; move beyond the touch slop → drag the whole panel. */
+    private class DragOrClick implements View.OnTouchListener {
+        private final Runnable action;
         private int startX, startY;
         private float downX, downY;
+        private boolean moved;
+
+        DragOrClick(Runnable action) {
+            this.action = action;
+        }
 
         @Override
         public boolean onTouch(View v, MotionEvent e) {
             if (panel == null) return false;
+            int slop = ViewConfiguration.get(AutoClickService.this).getScaledTouchSlop();
             switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     startX = panelParams.x;
                     startY = panelParams.y;
                     downX = e.getRawX();
                     downY = e.getRawY();
+                    moved = false;
+                    v.setPressed(true);
                     return true;
                 case MotionEvent.ACTION_MOVE:
-                    panelParams.x = startX + (int) (e.getRawX() - downX);
-                    panelParams.y = startY + (int) (e.getRawY() - downY);
+                    float dx = e.getRawX() - downX, dy = e.getRawY() - downY;
+                    if (!moved && Math.abs(dx) < slop && Math.abs(dy) < slop) return true;
+                    moved = true;
+                    panelParams.x = startX + (int) dx;
+                    panelParams.y = startY + (int) dy;
                     try {
                         wm.updateViewLayout(panel, panelParams);
                     } catch (RuntimeException ignored) {}
                     return true;
+                case MotionEvent.ACTION_UP:
+                    v.setPressed(false);
+                    if (!moved && action != null) action.run();
+                    return true;
                 default:
+                    v.setPressed(false);
                     return true;
             }
         }
@@ -623,7 +664,8 @@ public class AutoClickService extends AccessibilityService {
             v -> config.intervalMs = v,
             AutoClickStore.MIN_INTERVAL_MS,
             AutoClickStore.MAX_INTERVAL_MS,
-            () -> true
+            () -> true,
+            Unit.MS
         );
         stepper(() -> t("startDelay"), () -> config.startDelaySec, v -> config.startDelaySec = (int) v,
             AutoClickStore.START_DELAY_RANGE[0], AutoClickStore.START_DELAY_RANGE[1], () -> true);
@@ -669,32 +711,27 @@ public class AutoClickService extends AccessibilityService {
             () -> true
         );
         stepper(() -> t("tapMs"), () -> current().tapMs, v -> current().tapMs = v,
-            AutoClickStore.TAP_RANGE[0], AutoClickStore.TAP_RANGE[1], () -> "tap".equals(current().type));
+            AutoClickStore.TAP_RANGE[0], AutoClickStore.TAP_RANGE[1], () -> "tap".equals(current().type), Unit.MS);
         stepper(() -> t("holdMs"), () -> current().holdMs, v -> current().holdMs = v,
-            AutoClickStore.HOLD_RANGE[0], AutoClickStore.HOLD_RANGE[1], () -> "hold".equals(current().type));
+            AutoClickStore.HOLD_RANGE[0], AutoClickStore.HOLD_RANGE[1], () -> "hold".equals(current().type), Unit.MS);
         stepper(() -> t("swipeMs"), () -> current().swipeMs, v -> current().swipeMs = v,
-            AutoClickStore.SWIPE_RANGE[0], AutoClickStore.SWIPE_RANGE[1], () -> "swipe".equals(current().type));
+            AutoClickStore.SWIPE_RANGE[0], AutoClickStore.SWIPE_RANGE[1], () -> "swipe".equals(current().type), Unit.MS);
         stepper(() -> t("delayAfter"), () -> current().delayAfterMs, v -> current().delayAfterMs = v,
-            AutoClickStore.DELAY_RANGE[0], AutoClickStore.DELAY_RANGE[1], () -> "multi".equals(config.mode));
+            AutoClickStore.DELAY_RANGE[0], AutoClickStore.DELAY_RANGE[1], () -> "multi".equals(config.mode), Unit.MS);
         stepper(() -> t("repeat"), () -> current().repeat, v -> current().repeat = (int) v,
             AutoClickStore.REPEAT_RANGE[0], AutoClickStore.REPEAT_RANGE[1], () -> "multi".equals(config.mode));
 
         separator();
 
         // --- Appearance (shared by every macro)
-        cycler(
-            () -> t("markerSize"),
-            () -> "s".equals(appearance.markerSize) ? t("small") : "l".equals(appearance.markerSize) ? t("large") : t("medium"),
-            () -> {
-                appearance.markerSize = "s".equals(appearance.markerSize) ? "m" : "m".equals(appearance.markerSize) ? "l" : "s";
-                rebuildMarkers();
-            },
-            () -> true
-        );
+        stepper(() -> t("markerSize"), () -> appearance.markerDp, v -> {
+            appearance.markerDp = (int) v;
+            rebuildMarkers();
+        }, AutoClickStore.MARKER_RANGE[0], AutoClickStore.MARKER_RANGE[1], () -> true, Unit.DP);
         stepper(() -> t("opacity"), () -> appearance.panelOpacity, v -> {
             appearance.panelOpacity = (int) v;
             if (panel != null) panel.setAlpha(v / 100f);
-        }, 30, 100, () -> true);
+        }, 30, 100, () -> true, Unit.PERCENT);
         cycler(
             () -> t("hideWhileRunning"),
             () -> appearance.hideWhileRunning ? t("yes") : t("no"),
@@ -779,8 +816,42 @@ public class AutoClickService extends AccessibilityService {
         return row;
     }
 
-    /** Row: label · [−] value [+], with auto-repeat while a button is held. */
+    private enum Unit {
+        NONE,
+        MS,
+        DP,
+        PERCENT,
+    }
+
+    /** Durations are stored in ms and shown in the most readable unit. */
+    private static String format(long v, Unit unit) {
+        switch (unit) {
+            case MS:
+                if (v >= 60_000 && v % 1000 == 0) {
+                    long m = v / 60_000, sec = (v % 60_000) / 1000;
+                    return sec == 0 ? m + " min" : m + " min " + sec + " s";
+                }
+                if (v >= 1000) {
+                    String sec = String.valueOf(v / 1000.0);
+                    if (sec.endsWith(".0")) sec = sec.substring(0, sec.length() - 2);
+                    return sec + " s";
+                }
+                return v + " ms";
+            case DP:
+                return v + " dp";
+            case PERCENT:
+                return v + " %";
+            default:
+                return String.valueOf(v);
+        }
+    }
+
     private void stepper(Text label, LongGetter get, LongSetter set, long min, long max, Visible visible) {
+        stepper(label, get, set, min, max, visible, Unit.NONE);
+    }
+
+    /** Row: label · [−] value [+], with auto-repeat while a button is held. */
+    private void stepper(Text label, LongGetter get, LongSetter set, long min, long max, Visible visible, Unit unit) {
         LinearLayout row = newRow();
         TextView l = labelView(row);
         TextView minus = smallButton("−");
@@ -791,25 +862,27 @@ public class AutoClickService extends AccessibilityService {
         row.addView(plus);
         Runnable down = () -> {
             long v = get.get();
-            set.set(AutoClickStore.clamp(v - stepFor(v - 1), min, max));
-            value.setText(String.valueOf(get.get()));
+            set.set(AutoClickStore.clamp(v - stepFor(v - 1, unit), min, max));
+            value.setText(format(get.get(), unit));
         };
         Runnable up = () -> {
             long v = get.get();
-            set.set(AutoClickStore.clamp(v + stepFor(v), min, max));
-            value.setText(String.valueOf(get.get()));
+            set.set(AutoClickStore.clamp(v + stepFor(v, unit), min, max));
+            value.setText(format(get.get(), unit));
         };
         minus.setOnTouchListener(new RepeatTouch(down));
         plus.setOnTouchListener(new RepeatTouch(up));
         refreshers.add(() -> {
             row.setVisibility(visible.now() ? View.VISIBLE : View.GONE);
             l.setText(label.now());
-            value.setText(String.valueOf(get.get()));
+            value.setText(format(get.get(), unit));
         });
     }
 
     /** Step grows with the value: 1 below 20, then 5, 50, 500, 5000. */
-    private static long stepFor(long v) {
+    private static long stepFor(long v, Unit unit) {
+        if (unit == Unit.DP) return 2;
+        if (unit == Unit.MS && v >= 60_000) return 15_000;
         if (v < 20) return 1;
         if (v < 100) return 5;
         if (v < 1000) return 50;
@@ -1031,17 +1104,18 @@ public class AutoClickService extends AccessibilityService {
             this.target = target;
             this.index = index;
             this.isEnd = isEnd;
-            int base = appearance.markerDp();
-            size = dp(isEnd ? Math.round(base * 0.78f) : base);
+            int base = appearance.markerDp;
+            size = dp(isEnd ? Math.max(12, Math.round(base * 0.78f)) : base);
             view = new TextView(AutoClickService.this);
             view.setText(isEnd ? (index + 1) + "»" : String.valueOf(index + 1));
             view.setTextColor(Color.WHITE);
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, isEnd ? 12 : 16);
+            // Number size follows the marker, so tiny markers stay readable.
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(dp(8), size * (isEnd ? 0.3f : 0.36f)));
             view.setTypeface(Typeface.DEFAULT_BOLD);
             view.setGravity(Gravity.CENTER);
             shape.setShape(GradientDrawable.OVAL);
-            shape.setColor(isEnd ? 0x99333333 : 0xB3FA5D36);
-            shape.setStroke(dp(2), Color.WHITE);
+            shape.setColor(isEnd ? 0x99333333 : (0xB3000000 | (accent & 0x00FFFFFF)));
+            shape.setStroke(Math.max(1, dp(size < dp(28) ? 1 : 2)), Color.WHITE);
             view.setBackground(shape);
             view.setOnTouchListener(this);
 
@@ -1061,6 +1135,7 @@ public class AutoClickService extends AccessibilityService {
             } catch (RuntimeException e) {
                 attached = false;
             }
+            applyState();
         }
 
         private void nudgeTo(float cx, float cy) {
@@ -1098,10 +1173,22 @@ public class AutoClickService extends AccessibilityService {
         }
 
         void setPassThrough(boolean on) {
+            applyState();
+        }
+
+        /**
+         * Touchable and fully visible only when editing. While running or when
+         * hidden with 👁, touches go through to the app underneath.
+         */
+        void applyState() {
             if (!attached) return;
-            if (on) params.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+            boolean through = running || markersHidden;
+            if (through) params.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
             else params.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-            view.setAlpha(on ? (appearance.hideWhileRunning ? 0f : 0.35f) : 1f);
+            float alpha = 1f;
+            if (markersHidden || (running && appearance.hideWhileRunning)) alpha = 0f;
+            else if (running) alpha = 0.35f;
+            view.setAlpha(alpha);
             try {
                 wm.updateViewLayout(view, params);
             } catch (RuntimeException ignored) {}
@@ -1181,6 +1268,12 @@ public class AutoClickService extends AccessibilityService {
 
     private int dp(float v) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics());
+    }
+
+    /** "#rrggbb" from the app, or the fallback when missing or malformed. */
+    static int parseColor(String hex, int fallback) {
+        if (hex == null || !hex.matches("#[0-9a-fA-F]{6}")) return fallback;
+        return 0xFF000000 | Integer.parseInt(hex.substring(1), 16);
     }
 
     private static float clampF(float v, float min, float max) {

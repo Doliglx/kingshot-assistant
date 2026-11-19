@@ -34,6 +34,7 @@ final class AutoClickStore {
     static final long[] START_DELAY_RANGE = { 0, 60 };
     static final long[] CYCLES_RANGE = { 1, 1_000_000 };
     static final long[] DURATION_RANGE = { 1, 86_400 };
+    static final long[] MARKER_RANGE = { 16, 96 };
 
     private AutoClickStore() {}
 
@@ -181,13 +182,9 @@ final class AutoClickStore {
 
     /** How the markers and the floating panel look. Shared by every macro. */
     static final class Appearance {
-        String markerSize = "m"; // s | m | l
+        int markerDp = 46; // diameter of a marker
         int panelOpacity = 94; // percent
         boolean hideWhileRunning = false;
-
-        int markerDp() {
-            return "s".equals(markerSize) ? 34 : "l".equals(markerSize) ? 60 : 46;
-        }
     }
 
     static String readAppearanceRaw(Context ctx) {
@@ -209,8 +206,13 @@ final class AutoClickStore {
         Appearance a = new Appearance();
         try {
             JSONObject o = new JSONObject(readAppearanceRaw(ctx));
-            String size = o.optString("markerSize");
-            a.markerSize = "s".equals(size) || "l".equals(size) ? size : "m";
+            // A number of dp; older versions stored "s", "m" or "l".
+            Object size = o.opt("markerSize");
+            if (size instanceof Number) {
+                a.markerDp = (int) clamp(((Number) size).longValue(), MARKER_RANGE[0], MARKER_RANGE[1]);
+            } else {
+                a.markerDp = "s".equals(size) ? 34 : "l".equals(size) ? 60 : 46;
+            }
             a.panelOpacity = (int) clamp(o.optLong("panelOpacity", 94), 30, 100);
             a.hideWhileRunning = o.optBoolean("hideWhileRunning", false);
         } catch (JSONException ignored) {}
@@ -220,7 +222,7 @@ final class AutoClickStore {
     static void saveAppearance(Context ctx, Appearance a) {
         try {
             JSONObject o = new JSONObject();
-            o.put("markerSize", a.markerSize);
+            o.put("markerSize", a.markerDp);
             o.put("panelOpacity", a.panelOpacity);
             o.put("hideWhileRunning", a.hideWhileRunning);
             prefs(ctx).edit().putString(APPEARANCE_KEY, o.toString()).apply();
