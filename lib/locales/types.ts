@@ -157,6 +157,26 @@ export interface AppText {
     panelHelp: string
     safety: string
     speedNote: string
+    sync: string
+    sequence: string
+    syncHelp: string
+    appearance: string
+    markerSize: string
+    small: string
+    medium: string
+    large: string
+    opacity: string
+    hideWhileRunning: string
+    yes: string
+    no: string
+    share: string
+    exportBtn: string
+    exported: string
+    importBtn: string
+    importPlaceholder: string
+    importError: string
+    positionsNote: string
+    compactHelp: string
     /** Short texts shown on the native floating panel. */
     native: {
       ready: string

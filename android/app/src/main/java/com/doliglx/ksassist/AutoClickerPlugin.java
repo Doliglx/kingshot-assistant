@@ -55,6 +55,26 @@ public class AutoClickerPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void loadAppearance(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("json", AutoClickStore.readAppearanceRaw(getContext()));
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void saveAppearance(PluginCall call) {
+        if (!AutoClickStore.writeAppearanceRaw(getContext(), call.getString("json"))) {
+            call.reject("Invalid appearance");
+            return;
+        }
+        getActivity().runOnUiThread(() -> {
+            AutoClickService s = AutoClickService.get();
+            if (s != null) s.reloadAppearance();
+            call.resolve();
+        });
+    }
+
+    @PluginMethod
     public void showPanel(PluginCall call) {
         String id = call.getString("configId", "");
         JSObject texts = call.getObject("texts", new JSObject());

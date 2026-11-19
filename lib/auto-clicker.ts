@@ -8,7 +8,8 @@
 import { Capacitor, registerPlugin } from "@capacitor/core"
 
 export type TargetType = "tap" | "hold" | "swipe"
-export type ClickMode = "single" | "multi"
+/** single: one point · multi: targets one after another · sync: all targets at once */
+export type ClickMode = "single" | "multi" | "sync"
 export type StopRule = "infinite" | "cycles" | "duration"
 
 export interface ClickTarget {
@@ -109,7 +110,7 @@ export function newConfig(name: string, mode: ClickMode, labels: string[] = []):
 export function sanitizeConfig(raw: unknown): ClickConfig | null {
   if (!raw || typeof raw !== "object") return null
   const o = raw as Record<string, unknown>
-  const mode: ClickMode = o.mode === "multi" ? "multi" : "single"
+  const mode: ClickMode = o.mode === "multi" || o.mode === "sync" ? o.mode : "single"
   const rawTargets = Array.isArray(o.targets) ? o.targets : []
   const targets: ClickTarget[] = rawTargets
     .slice(0, mode === "single" ? 1 : LIMITS.targets)
@@ -158,11 +159,67 @@ export function parseConfigs(json: string): ClickConfig[] {
 /** Length of one cycle in ms (gestures + waits), used for the summary line. */
 export function cycleDurationMs(c: ClickConfig): number {
   const gesture = (t: ClickTarget) => (t.type === "hold" ? t.holdMs : t.type === "swipe" ? t.swipeMs : t.tapMs)
+  // Simultaneous: every target is pressed together, the longest press sets the pace.
+  if (c.mode === "sync") return Math.max(...c.targets.map(gesture)) + c.intervalMs
   const body = c.targets.reduce(
     (sum, t) => sum + t.repeat * (gesture(t) + (c.mode === "multi" ? t.delayAfterMs : 0)),
     0
   )
   return body + c.intervalMs
+}
+
+// ---------------------------------------------------------------------
+// Sharing macros
+
+const EXPORT_KIND = "kingshot-assistant/macro"
+
+/** Text to paste elsewhere (chat, another phone). */
+export function exportConfig(c: ClickConfig): string {
+  return JSON.stringify({ kind: EXPORT_KIND, version: 1, macro: c })
+}
+
+/**
+ * Reads macros pasted by the user: an exported macro, a bare macro or a list.
+ * Everything is re-validated and gets fresh ids, so an import never replaces
+ * an existing macro. Returns null when nothing usable was found.
+ */
+export function importConfigs(text: string): ClickConfig[] | null {
+  let data: unknown
+  try {
+    data = JSON.parse(text.trim())
+  } catch {
+    return null
+  }
+  if (data && typeof data === "object" && (data as { kind?: unknown }).kind === EXPORT_KIND) {
+    data = (data as { macro?: unknown }).macro
+  }
+  const list = (Array.isArray(data) ? data : [data])
+    .slice(0, LIMITS.configs)
+    .map(sanitizeConfig)
+    .filter((c): c is ClickConfig => c !== null)
+    .map((c) => ({ ...c, id: newId(), targets: c.targets.map((t) => ({ ...t, id: newId() })) }))
+  return list.length ? list : null
+}
+
+// ---------------------------------------------------------------------
+// Appearance of the markers and of the floating panel (shared by all macros)
+
+export interface Appearance {
+  markerSize: "s" | "m" | "l"
+  /** Percent. */
+  panelOpacity: number
+  hideWhileRunning: boolean
+}
+
+export const DEFAULT_APPEARANCE: Appearance = { markerSize: "m", panelOpacity: 94, hideWhileRunning: false }
+
+export function sanitizeAppearance(raw: unknown): Appearance {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>
+  return {
+    markerSize: o.markerSize === "s" || o.markerSize === "l" ? o.markerSize : "m",
+    panelOpacity: clamp(o.panelOpacity, [30, 100], DEFAULT_APPEARANCE.panelOpacity),
+    hideWhileRunning: o.hideWhileRunning === true,
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -179,6 +236,8 @@ export interface AutoClickerPlugin {
     texts: Record<string, string>
   }): Promise<void>
   hidePanel(): Promise<void>
+  loadAppearance(): Promise<{ json: string }>
+  saveAppearance(options: { json: string }): Promise<void>
 }
 
 export const AutoClickerNative = registerPlugin<AutoClickerPlugin>("AutoClicker")
@@ -207,6 +266,32 @@ export async function saveConfigs(configs: ClickConfig[]): Promise<void> {
   }
   try {
     localStorage.setItem(WEB_KEY, json)
+  } catch {
+    // storage unavailable
+  }
+}
+
+const WEB_APPEARANCE_KEY = "ks-assist-autoclicker-appearance-v1"
+
+export async function loadAppearance(): Promise<Appearance> {
+  try {
+    const json = autoClickerAvailable()
+      ? (await AutoClickerNative.loadAppearance()).json
+      : (localStorage.getItem(WEB_APPEARANCE_KEY) ?? "{}")
+    return sanitizeAppearance(JSON.parse(json))
+  } catch {
+    return DEFAULT_APPEARANCE
+  }
+}
+
+export async function saveAppearance(a: Appearance): Promise<void> {
+  const json = JSON.stringify(sanitizeAppearance(a))
+  if (autoClickerAvailable()) {
+    await AutoClickerNative.saveAppearance({ json })
+    return
+  }
+  try {
+    localStorage.setItem(WEB_APPEARANCE_KEY, json)
   } catch {
     // storage unavailable
   }

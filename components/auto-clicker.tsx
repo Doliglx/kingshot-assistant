@@ -4,12 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   AlertTriangle,
   CheckCircle2,
+  ClipboardPaste,
   Copy,
   HeartPulse,
   Layers,
   ListPlus,
   MousePointerClick,
+  Palette,
   Plus,
+  Share2,
   ShieldCheck,
   Square,
   Trash2,
@@ -20,16 +23,24 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { useSettings } from "@/components/app-settings"
+import { copyText } from "@/lib/clipboard"
 import {
   AutoClickerNative,
+  DEFAULT_APPEARANCE,
   LIMITS,
   autoClickerAvailable,
   cycleDurationMs,
+  exportConfig,
+  importConfigs,
+  loadAppearance,
   loadConfigs,
   newConfig,
   newTarget,
+  saveAppearance,
   saveConfigs,
+  type Appearance,
   type ClickConfig,
+  type ClickMode,
   type ClickTarget,
   type StopRule,
   type TargetType,
@@ -106,6 +117,9 @@ export function AutoClicker() {
   const [loaded, setLoaded] = useState(false)
   const [status, setStatus] = useState({ enabled: false, panelShown: false, running: false, configId: "" })
   const [error, setError] = useState("")
+  const [appearance, setAppearance] = useState<Appearance>(DEFAULT_APPEARANCE)
+  const [importText, setImportText] = useState("")
+  const [shareInfo, setShareInfo] = useState("")
   const statusRef = useRef(status)
   statusRef.current = status
 
@@ -131,6 +145,17 @@ export function AutoClicker() {
     swipeMs: a.swipeMs,
     delayAfter: a.delayAfter,
     repeat: a.repeat,
+    mode: a.mode,
+    sequence: a.sequence,
+    simultaneous: a.sync,
+    markerSize: a.markerSize,
+    small: a.small,
+    medium: a.medium,
+    large: a.large,
+    opacity: a.opacity,
+    hideWhileRunning: a.hideWhileRunning,
+    yes: a.yes,
+    no: a.no,
   }
   const textsRef = useRef(panelTexts)
   textsRef.current = panelTexts
@@ -139,6 +164,7 @@ export function AutoClicker() {
     try {
       const list = await loadConfigs()
       setConfigs(list)
+      setAppearance(await loadAppearance())
       setSelectedId((id) => (list.some((c) => c.id === id) ? id : (list[0]?.id ?? "")))
       if (autoClickerAvailable()) setStatus(await AutoClickerNative.status())
     } catch (e) {
@@ -205,7 +231,33 @@ export function AutoClicker() {
     return name
   }
 
-  const setMode = (mode: "single" | "multi") => {
+  const changeAppearance = (patch: Partial<Appearance>) => {
+    const next = { ...appearance, ...patch }
+    setAppearance(next)
+    saveAppearance(next).catch((e) => setError(e instanceof Error ? e.message : String(e)))
+  }
+
+  const shareSelected = async () => {
+    if (!selected) return
+    setShareInfo((await copyText(exportConfig(selected))) ? a.exported : "")
+  }
+
+  const doImport = () => {
+    const list = importConfigs(importText)
+    if (!list) {
+      setShareInfo(a.importError)
+      return
+    }
+    const room = Math.max(0, LIMITS.configs - configs.length)
+    const added = list.slice(0, room).map((c) => ({ ...c, name: uniqueName(c.name || a[c.mode]) }))
+    if (added.length === 0) return
+    void persist([...configs, ...added])
+    setSelectedId(added[0].id)
+    setImportText("")
+    setShareInfo("")
+  }
+
+  const setMode = (mode: ClickMode) => {
     if (!selected || selected.mode === mode) return
     const targets =
       mode === "single"
@@ -309,7 +361,7 @@ export function AutoClicker() {
                   <span className="min-w-0">
                     <span className="block truncate font-semibold">{c.name || "—"}</span>
                     <span className="text-xs text-muted-foreground">
-                      {c.mode === "single" ? a.single : `${a.multi} · ${c.targets.length}`}
+                      {c.mode === "single" ? a.single : `${c.mode === "sync" ? a.sync : a.multi} · ${c.targets.length}`}
                     </span>
                   </span>
                   {status.panelShown && status.configId === c.id && (
@@ -370,18 +422,20 @@ export function AutoClicker() {
               </Field>
 
               <Field label={a.mode}>
-                <div className="grid grid-cols-2 gap-2">
-                  {(["single", "multi"] as const).map((m) => (
+                <div className="grid grid-cols-3 gap-2">
+                  {(["single", "multi", "sync"] as const).map((m) => (
                     <Button
                       key={m}
                       type="button"
                       variant={selected.mode === m ? "default" : "outline"}
                       onClick={() => setMode(m)}
+                      className="h-auto min-h-9 whitespace-normal px-2 py-2 text-xs leading-tight"
                     >
                       {a[m]}
                     </Button>
                   ))}
                 </div>
+                {selected.mode === "sync" && <p className="text-xs text-muted-foreground">{a.syncHelp}</p>}
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
@@ -460,7 +514,7 @@ export function AutoClicker() {
                       onChange={(e) => updateTarget(target.id, { label: e.target.value })}
                       className="min-w-0 flex-1 border-border/50 bg-input"
                     />
-                    {selected.mode === "multi" && selected.targets.length > 2 && (
+                    {selected.mode !== "single" && selected.targets.length > 2 && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -535,7 +589,7 @@ export function AutoClicker() {
                   </p>
                 </div>
               ))}
-              {selected.mode === "multi" && selected.targets.length < LIMITS.targets && (
+              {selected.mode !== "single" && selected.targets.length < LIMITS.targets && (
                 <Button
                   type="button"
                   variant="outline"
@@ -563,6 +617,7 @@ export function AutoClicker() {
               </Button>
               <p className="text-xs text-muted-foreground">{a.panelHelp}</p>
               <p className="text-xs text-muted-foreground">{a.speedNote}</p>
+              <p className="text-xs text-muted-foreground">{a.compactHelp}</p>
               {error && <p className="text-xs text-red-400">{error}</p>}
               <div className="grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
                 <Button
@@ -598,6 +653,89 @@ export function AutoClicker() {
           </Card>
         </>
       )}
+
+      {/* Look of the markers and of the floating panel */}
+      <Card className={cardCls}>
+        <CardHeader className="border-b border-border/50 pb-4">
+          <CardTitle className={titleCls}>
+            <Palette className="h-4 w-4" />
+            {a.appearance}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-6">
+          <Field label={a.markerSize}>
+            <div className="grid grid-cols-3 gap-2">
+              {(["s", "m", "l"] as const).map((size) => (
+                <Button
+                  key={size}
+                  type="button"
+                  variant={appearance.markerSize === size ? "default" : "outline"}
+                  onClick={() => changeAppearance({ markerSize: size })}
+                >
+                  {size === "s" ? a.small : size === "m" ? a.medium : a.large}
+                </Button>
+              ))}
+            </div>
+          </Field>
+          <Field label={`${a.opacity} · ${appearance.panelOpacity}`}>
+            <input
+              type="range"
+              min={30}
+              max={100}
+              step={5}
+              value={appearance.panelOpacity}
+              onChange={(e) => changeAppearance({ panelOpacity: Number(e.target.value) })}
+              className="w-full accent-[var(--primary)]"
+              aria-label={a.opacity}
+            />
+          </Field>
+          <label className="flex items-center justify-between gap-3 text-sm">
+            <span>{a.hideWhileRunning}</span>
+            <input
+              type="checkbox"
+              checked={appearance.hideWhileRunning}
+              onChange={(e) => changeAppearance({ hideWhileRunning: e.target.checked })}
+              className="h-5 w-5 accent-[var(--primary)]"
+            />
+          </label>
+        </CardContent>
+      </Card>
+
+      {/* Share a macro with someone else, or bring one in */}
+      <Card className={cardCls}>
+        <CardHeader className="border-b border-border/50 pb-4">
+          <CardTitle className={titleCls}>
+            <Share2 className="h-4 w-4" />
+            {a.share}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 pt-6">
+          <Button type="button" variant="outline" className="w-full" disabled={!selected} onClick={shareSelected}>
+            <Copy className="h-4 w-4" />
+            {a.exportBtn}
+          </Button>
+          <textarea
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            placeholder={a.importPlaceholder}
+            rows={3}
+            spellCheck={false}
+            className="w-full rounded-md border border-border/50 bg-input p-3 font-mono text-xs"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={!importText.trim() || configs.length >= LIMITS.configs}
+            onClick={doImport}
+          >
+            <ClipboardPaste className="h-4 w-4" />
+            {a.importBtn}
+          </Button>
+          {shareInfo && <p className="text-xs text-muted-foreground">{shareInfo}</p>}
+          <p className="text-xs text-muted-foreground">{a.positionsNote}</p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

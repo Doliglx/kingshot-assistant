@@ -19,6 +19,7 @@ final class AutoClickStore {
 
     private static final String PREFS = "autoclicker";
     private static final String KEY = "configs";
+    private static final String APPEARANCE_KEY = "appearance";
 
     // Hard limits, mirrored in lib/auto-clicker.ts
     static final int MAX_TARGETS = 20;
@@ -59,7 +60,7 @@ final class AutoClickStore {
     static final class Config {
         String id = "";
         String name = "";
-        String mode = "single"; // single | multi
+        String mode = "single"; // single | multi (one after the other) | sync (all at once)
         long intervalMs = 1000;
         int startDelaySec = 3;
         String stop = "infinite"; // infinite | cycles | duration
@@ -178,11 +179,60 @@ final class AutoClickStore {
         } catch (JSONException ignored) {}
     }
 
+    /** How the markers and the floating panel look. Shared by every macro. */
+    static final class Appearance {
+        String markerSize = "m"; // s | m | l
+        int panelOpacity = 94; // percent
+        boolean hideWhileRunning = false;
+
+        int markerDp() {
+            return "s".equals(markerSize) ? 34 : "l".equals(markerSize) ? 60 : 46;
+        }
+    }
+
+    static String readAppearanceRaw(Context ctx) {
+        return prefs(ctx).getString(APPEARANCE_KEY, "{}");
+    }
+
+    static boolean writeAppearanceRaw(Context ctx, String json) {
+        if (json == null || json.length() > 2_000) return false;
+        try {
+            new JSONObject(json);
+        } catch (JSONException e) {
+            return false;
+        }
+        prefs(ctx).edit().putString(APPEARANCE_KEY, json).apply();
+        return true;
+    }
+
+    static Appearance loadAppearance(Context ctx) {
+        Appearance a = new Appearance();
+        try {
+            JSONObject o = new JSONObject(readAppearanceRaw(ctx));
+            String size = o.optString("markerSize");
+            a.markerSize = "s".equals(size) || "l".equals(size) ? size : "m";
+            a.panelOpacity = (int) clamp(o.optLong("panelOpacity", 94), 30, 100);
+            a.hideWhileRunning = o.optBoolean("hideWhileRunning", false);
+        } catch (JSONException ignored) {}
+        return a;
+    }
+
+    static void saveAppearance(Context ctx, Appearance a) {
+        try {
+            JSONObject o = new JSONObject();
+            o.put("markerSize", a.markerSize);
+            o.put("panelOpacity", a.panelOpacity);
+            o.put("hideWhileRunning", a.hideWhileRunning);
+            prefs(ctx).edit().putString(APPEARANCE_KEY, o.toString()).apply();
+        } catch (JSONException ignored) {}
+    }
+
     private static Config parse(JSONObject o) {
         Config c = new Config();
         c.id = o.optString("id");
         c.name = o.optString("name");
-        c.mode = "multi".equals(o.optString("mode")) ? "multi" : "single";
+        String mode = o.optString("mode");
+        c.mode = "multi".equals(mode) || "sync".equals(mode) ? mode : "single";
         c.intervalMs = clamp(o.optLong("intervalMs", 1000), MIN_INTERVAL_MS, MAX_INTERVAL_MS);
         c.startDelaySec = (int) clamp(o.optLong("startDelaySec", 3), START_DELAY_RANGE[0], START_DELAY_RANGE[1]);
         String stop = o.optString("stop");

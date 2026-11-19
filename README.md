@@ -55,6 +55,9 @@ A floating panel with numbered markers you drag onto the buttons you want presse
 
 - **Single target** — one point, tapped at a fixed interval.
 - **Multiple targets** — a sequence (tap, long press or swipe), each step with its own delay and repeat count, saved as a named macro.
+- **Simultaneous** — every target pressed at the same moment, like several fingers.
+- Everything is adjustable from the floating panel itself (⚙), which also folds down to a small floating button and shows the tap count and elapsed time while running.
+- Macros can be copied as text and imported on another phone.
 - Stops after a number of cycles, after a duration, or when you press stop. It also stops by itself when the screen turns off or the phone rotates.
 - A *batch healing* template is included: two targets, looped.
 

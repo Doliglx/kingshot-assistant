@@ -1,6 +1,15 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
-import { LIMITS, cycleDurationMs, newConfig, parseConfigs, sanitizeConfig } from "../lib/auto-clicker"
+import {
+  LIMITS,
+  cycleDurationMs,
+  exportConfig,
+  importConfigs,
+  newConfig,
+  parseConfigs,
+  sanitizeAppearance,
+  sanitizeConfig,
+} from "../lib/auto-clicker"
 import { UI } from "../lib/i18n"
 import { APP_TEXT } from "../lib/locales"
 import { LANGS } from "../lib/messages"
@@ -90,5 +99,40 @@ describe("auto clicker macros", () => {
     const c = newConfig("Heal", "multi", ["Heal", "Help"])
     // 2 taps of 20 ms + 2 waits of 500 ms + 1000 ms pause
     assert.equal(cycleDurationMs(c), 2 * 20 + 2 * 500 + 1000)
+  })
+})
+
+describe("auto clicker: simultaneous mode, sharing, appearance", () => {
+  it("keeps the simultaneous mode and times a cycle by its longest press", () => {
+    const c = { ...newConfig("Sync", "multi", ["A", "B"]), mode: "sync" as const }
+    c.targets[1] = { ...c.targets[1], type: "hold", holdMs: 800 }
+    assert.equal(sanitizeConfig(c)!.mode, "sync")
+    assert.equal(cycleDurationMs(c), 800 + c.intervalMs)
+  })
+
+  it("round-trips an exported macro with fresh ids", () => {
+    const original = newConfig("Heal", "multi", ["Heal", "Help"])
+    const [copy] = importConfigs(exportConfig(original))!
+    assert.equal(copy.name, "Heal")
+    assert.deepEqual(copy.targets.map((t) => t.label), ["Heal", "Help"])
+    assert.notEqual(copy.id, original.id)
+    assert.notEqual(copy.targets[0].id, original.targets[0].id)
+  })
+
+  it("imports bare macros and lists, and rejects anything else", () => {
+    assert.equal(importConfigs(JSON.stringify(newConfig("One", "single")))!.length, 1)
+    assert.equal(importConfigs(JSON.stringify([newConfig("A", "single"), newConfig("B", "multi")]))!.length, 2)
+    assert.equal(importConfigs("hello"), null)
+    assert.equal(importConfigs("42"), null)
+    assert.equal(importConfigs("[]"), null)
+  })
+
+  it("clamps the appearance settings", () => {
+    assert.deepEqual(sanitizeAppearance({ markerSize: "xxl", panelOpacity: 5, hideWhileRunning: "yes" }), {
+      markerSize: "m",
+      panelOpacity: 30,
+      hideWhileRunning: false,
+    })
+    assert.equal(sanitizeAppearance(null).panelOpacity, 94)
   })
 })

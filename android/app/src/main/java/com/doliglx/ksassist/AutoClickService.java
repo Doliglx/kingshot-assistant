@@ -76,7 +76,12 @@ public class AutoClickService extends AccessibilityService {
     private WindowManager.LayoutParams panelParams;
     private TextView playBtn;
     private TextView statusView;
+    private LinearLayout bar;
     private LinearLayout settings;
+    private TextView compactBtn;
+    private final List<View> fullOnly = new ArrayList<>();
+    private boolean compact = false;
+    private AutoClickStore.Appearance appearance = new AutoClickStore.Appearance();
     private final List<Runnable> refreshers = new ArrayList<>();
 
     // Texts in the app language (English until the app sends its own)
@@ -91,6 +96,7 @@ public class AutoClickService extends AccessibilityService {
     private long runStartedAt = 0;
     private long lastSuccessAt = 0;
     private long lastStatusAt = 0;
+    private long tapCount = 0;
 
     private final BroadcastReceiver screenOff = new BroadcastReceiver() {
         @Override
@@ -106,6 +112,7 @@ public class AutoClickService extends AccessibilityService {
     protected void onServiceConnected() {
         super.onServiceConnected();
         wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        appearance = AutoClickStore.loadAppearance(this);
         defaultTexts();
         instance = this;
         ContextCompat.registerReceiver(
@@ -162,6 +169,10 @@ public class AutoClickService extends AccessibilityService {
             { "target", "Target" }, { "action", "Action" }, { "tap", "Tap" }, { "hold", "Long press" },
             { "swipe", "Swipe" }, { "tapMs", "Tap duration (ms)" }, { "holdMs", "Press duration (ms)" },
             { "swipeMs", "Swipe duration (ms)" }, { "delayAfter", "Wait after (ms)" }, { "repeat", "Repeat" },
+            { "mode", "Mode" }, { "sequence", "One after another" }, { "simultaneous", "All at once" },
+            { "markerSize", "Marker size" }, { "small", "Small" }, { "medium", "Medium" }, { "large", "Large" },
+            { "opacity", "Panel opacity (%)" }, { "hideWhileRunning", "Hide markers while running" },
+            { "yes", "Yes" }, { "no", "No" },
         };
         for (String[] kv : d) if (!texts.containsKey(kv[0])) texts.put(kv[0], kv[1]);
     }
@@ -201,6 +212,14 @@ public class AutoClickService extends AccessibilityService {
         return true;
     }
 
+    /** The app changed the appearance settings: apply them to what is on screen. */
+    void reloadAppearance() {
+        appearance = AutoClickStore.loadAppearance(this);
+        if (panel != null) panel.setAlpha(appearance.panelOpacity / 100f);
+        if (!running) rebuildMarkers();
+        refreshSettings();
+    }
+
     void hidePanel() {
         stopRun(t("ready"));
         removeMarkers();
@@ -212,7 +231,10 @@ public class AutoClickService extends AccessibilityService {
         panel = null;
         playBtn = null;
         statusView = null;
+        bar = null;
         settings = null;
+        compactBtn = null;
+        fullOnly.clear();
         refreshers.clear();
     }
 
@@ -220,6 +242,16 @@ public class AutoClickService extends AccessibilityService {
     // Run loop
 
     private final Runnable stepRunnable = this::step;
+
+    /** Keeps the elapsed time moving even when the interval is long. */
+    private final Runnable clockRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!running) return;
+            updateRunStatus(true);
+            handler.postDelayed(this, 500);
+        }
+    };
 
     private final Runnable countdownRunnable = new Runnable() {
         @Override
@@ -233,6 +265,7 @@ public class AutoClickService extends AccessibilityService {
                 runStartedAt = SystemClock.elapsedRealtime();
                 lastSuccessAt = runStartedAt;
                 updateRunStatus(true);
+                handler.postDelayed(clockRunnable, 500);
                 step();
             }
         }
@@ -248,6 +281,7 @@ public class AutoClickService extends AccessibilityService {
         targetIndex = 0;
         repeatIndex = 0;
         cycleCount = 0;
+        tapCount = 0;
         countdown = config.startDelaySec;
         setMarkersPassThrough(true);
         if (playBtn != null) playBtn.setText("■");
@@ -257,6 +291,7 @@ public class AutoClickService extends AccessibilityService {
     private void stopRun(String status) {
         handler.removeCallbacks(stepRunnable);
         handler.removeCallbacks(countdownRunnable);
+        handler.removeCallbacks(clockRunnable);
         if (!running) return;
         running = false;
         setMarkersPassThrough(false);
@@ -274,8 +309,9 @@ public class AutoClickService extends AccessibilityService {
             return;
         }
         if (targetIndex >= config.targets.size()) targetIndex = 0;
-        AutoClickStore.Target target = config.targets.get(targetIndex);
-        GestureDescription gesture = buildGesture(target);
+        boolean sync = "sync".equals(config.mode);
+        GestureDescription gesture = sync ? buildSyncGesture() : buildGesture(config.targets.get(targetIndex));
+        final int taps = gesture == null ? 0 : gesture.getStrokeCount();
         boolean accepted =
             gesture != null &&
             dispatchGesture(
@@ -284,6 +320,7 @@ public class AutoClickService extends AccessibilityService {
                     @Override
                     public void onCompleted(GestureDescription g) {
                         lastSuccessAt = SystemClock.elapsedRealtime();
+                        tapCount += taps;
                         advance();
                     }
 
@@ -309,6 +346,18 @@ public class AutoClickService extends AccessibilityService {
 
     private void advance() {
         if (!running || config == null) return;
+        if ("sync".equals(config.mode)) {
+            // Every target was pressed at once: that is one whole cycle.
+            cycleCount++;
+            if ("cycles".equals(config.stop) && cycleCount >= config.cycles) {
+                stopRun(t("done"));
+                return;
+            }
+            updateRunStatus(false);
+            if (config.intervalMs <= 0) handler.post(stepRunnable);
+            else handler.postDelayed(stepRunnable, config.intervalMs);
+            return;
+        }
         AutoClickStore.Target target = config.targets.get(targetIndex);
         boolean multi = "multi".equals(config.mode);
         long wait = multi ? target.delayAfterMs : 0;
@@ -332,8 +381,38 @@ public class AutoClickService extends AccessibilityService {
     }
 
     private GestureDescription buildGesture(AutoClickStore.Target target) {
-        if (!target.placed()) return null;
+        GestureDescription.StrokeDescription stroke = buildStroke(target, realMetrics());
+        if (stroke == null) return null;
+        try {
+            return new GestureDescription.Builder().addStroke(stroke).build();
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** All placed targets pressed together, as several fingers would (up to the system limit). */
+    private GestureDescription buildSyncGesture() {
         DisplayMetrics dm = realMetrics();
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        int count = 0;
+        int max = GestureDescription.getMaxStrokeCount();
+        for (AutoClickStore.Target target : config.targets) {
+            if (count >= max) break;
+            GestureDescription.StrokeDescription stroke = buildStroke(target, dm);
+            if (stroke == null) continue;
+            builder.addStroke(stroke);
+            count++;
+        }
+        if (count == 0) return null;
+        try {
+            return builder.build();
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private GestureDescription.StrokeDescription buildStroke(AutoClickStore.Target target, DisplayMetrics dm) {
+        if (!target.placed()) return null;
         float x = clampF(target.x, 1, dm.widthPixels - 1);
         float y = clampF(target.y, 1, dm.heightPixels - 1);
         Path path = new Path();
@@ -347,9 +426,7 @@ public class AutoClickService extends AccessibilityService {
         }
         duration = Math.max(1, Math.min(duration, GestureDescription.getMaxGestureDuration()));
         try {
-            return new GestureDescription.Builder()
-                .addStroke(new GestureDescription.StrokeDescription(path, 0, duration))
-                .build();
+            return new GestureDescription.StrokeDescription(path, 0, duration);
         } catch (RuntimeException e) {
             return null;
         }
@@ -360,8 +437,11 @@ public class AutoClickService extends AccessibilityService {
         long now = SystemClock.elapsedRealtime();
         if (!force && now - lastStatusAt < STATUS_EVERY_MS) return;
         lastStatusAt = now;
-        String count = "cycles".equals(config.stop) ? cycleCount + "/" + config.cycles : String.valueOf(cycleCount);
-        setStatus(t("running") + " · " + count);
+        // Cycles against the goal when stopping after N cycles, otherwise the number of taps.
+        String count = "cycles".equals(config.stop) ? cycleCount + "/" + config.cycles : "×" + tapCount;
+        long sec = runStartedAt > 0 ? (now - runStartedAt) / 1000 : 0;
+        String elapsed = sec / 60 + ":" + (sec % 60 < 10 ? "0" : "") + sec % 60;
+        setStatus(count + " · " + elapsed);
     }
 
     private void setStatus(String s) {
@@ -381,7 +461,8 @@ public class AutoClickService extends AccessibilityService {
         panel.setBackground(bg);
         panel.setPadding(dp(6), dp(4), dp(6), dp(4));
 
-        LinearLayout bar = new LinearLayout(this);
+        fullOnly.clear();
+        bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
 
@@ -414,20 +495,30 @@ public class AutoClickService extends AccessibilityService {
         TextView gear = iconButton("⚙", Color.WHITE);
         gear.setOnClickListener(v -> toggleSettings());
         bar.addView(gear);
+        fullOnly.add(gear);
 
         TextView add = iconButton("＋", Color.WHITE);
         add.setOnClickListener(v -> addTarget());
         bar.addView(add);
+        fullOnly.add(add);
 
         TextView close = iconButton("✕", MUTED);
         close.setOnClickListener(v -> hidePanel());
         bar.addView(close);
+        fullOnly.add(close);
 
-        panel.addView(bar, new LinearLayout.LayoutParams(dp(268), LinearLayout.LayoutParams.WRAP_CONTENT));
+        // Folds the panel down to a small floating button (play + status).
+        compactBtn = iconButton("◂", MUTED);
+        compactBtn.setOnClickListener(v -> setCompact(!compact));
+        bar.addView(compactBtn);
+
+        panel.addView(bar, new LinearLayout.LayoutParams(dp(300), LinearLayout.LayoutParams.WRAP_CONTENT));
 
         buildSettings();
         settings.setVisibility(settingsOpen ? View.VISIBLE : View.GONE);
-        panel.addView(settings, new LinearLayout.LayoutParams(dp(268), LinearLayout.LayoutParams.WRAP_CONTENT));
+        panel.addView(settings, new LinearLayout.LayoutParams(dp(300), LinearLayout.LayoutParams.WRAP_CONTENT));
+        panel.setAlpha(appearance.panelOpacity / 100f);
+        if (compact) setCompact(true);
 
         panelParams = overlayParams(true);
         panelParams.x = x;
@@ -448,6 +539,19 @@ public class AutoClickService extends AccessibilityService {
         b.setMinWidth(dp(42));
         b.setMinHeight(dp(44));
         return b;
+    }
+
+    private void setCompact(boolean on) {
+        compact = on;
+        if (bar == null) return;
+        for (View v : fullOnly) v.setVisibility(on ? View.GONE : View.VISIBLE);
+        if (on && settings != null) settings.setVisibility(View.GONE);
+        if (compactBtn != null) compactBtn.setText(on ? "▸" : "◂");
+        if (statusView != null) statusView.setMinWidth(dp(on ? 56 : 84));
+        bar.setLayoutParams(new LinearLayout.LayoutParams(
+            on ? LinearLayout.LayoutParams.WRAP_CONTENT : dp(300),
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
     }
 
     private void toggleSettings() {
@@ -528,19 +632,22 @@ public class AutoClickService extends AccessibilityService {
             () -> "cycles".equals(config.stop) ? t("cycles") : "duration".equals(config.stop) ? t("seconds") : t("infinite"),
             () -> {
                 config.stop = "infinite".equals(config.stop) ? "cycles" : "cycles".equals(config.stop) ? "duration" : "infinite";
-            }
+            },
+            () -> true
         );
         stepper(() -> t("cycles"), () -> config.cycles, v -> config.cycles = (int) v,
             AutoClickStore.CYCLES_RANGE[0], AutoClickStore.CYCLES_RANGE[1], () -> "cycles".equals(config.stop));
         stepper(() -> t("seconds"), () -> config.durationSec, v -> config.durationSec = (int) v,
             AutoClickStore.DURATION_RANGE[0], AutoClickStore.DURATION_RANGE[1], () -> "duration".equals(config.stop));
 
-        View line = new View(this);
-        line.setBackgroundColor(0x55FFFFFF);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1));
-        lp.topMargin = dp(6);
-        lp.bottomMargin = dp(2);
-        settings.addView(line, lp);
+        separator();
+
+        cycler(
+            () -> t("mode"),
+            () -> "sync".equals(config.mode) ? t("simultaneous") : t("sequence"),
+            () -> config.mode = "sync".equals(config.mode) ? "multi" : "sync",
+            () -> config.targets.size() > 1
+        );
 
         // --- Selected target
         chooser(
@@ -558,7 +665,8 @@ public class AutoClickService extends AccessibilityService {
                 AutoClickStore.Target c = current();
                 c.type = "tap".equals(c.type) ? "hold" : "hold".equals(c.type) ? "swipe" : "tap";
                 rebuildMarkers();
-            }
+            },
+            () -> true
         );
         stepper(() -> t("tapMs"), () -> current().tapMs, v -> current().tapMs = v,
             AutoClickStore.TAP_RANGE[0], AutoClickStore.TAP_RANGE[1], () -> "tap".equals(current().type));
@@ -571,7 +679,39 @@ public class AutoClickService extends AccessibilityService {
         stepper(() -> t("repeat"), () -> current().repeat, v -> current().repeat = (int) v,
             AutoClickStore.REPEAT_RANGE[0], AutoClickStore.REPEAT_RANGE[1], () -> "multi".equals(config.mode));
 
+        separator();
+
+        // --- Appearance (shared by every macro)
+        cycler(
+            () -> t("markerSize"),
+            () -> "s".equals(appearance.markerSize) ? t("small") : "l".equals(appearance.markerSize) ? t("large") : t("medium"),
+            () -> {
+                appearance.markerSize = "s".equals(appearance.markerSize) ? "m" : "m".equals(appearance.markerSize) ? "l" : "s";
+                rebuildMarkers();
+            },
+            () -> true
+        );
+        stepper(() -> t("opacity"), () -> appearance.panelOpacity, v -> {
+            appearance.panelOpacity = (int) v;
+            if (panel != null) panel.setAlpha(v / 100f);
+        }, 30, 100, () -> true);
+        cycler(
+            () -> t("hideWhileRunning"),
+            () -> appearance.hideWhileRunning ? t("yes") : t("no"),
+            () -> appearance.hideWhileRunning = !appearance.hideWhileRunning,
+            () -> true
+        );
+
         refreshSettings();
+    }
+
+    private void separator() {
+        View line = new View(this);
+        line.setBackgroundColor(0x55FFFFFF);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1));
+        lp.topMargin = dp(6);
+        lp.bottomMargin = dp(2);
+        settings.addView(line, lp);
     }
 
     private AutoClickStore.Target current() {
@@ -678,7 +818,7 @@ public class AutoClickService extends AccessibilityService {
     }
 
     /** Row: label · value that changes when tapped. */
-    private void cycler(Text label, Text value, Runnable next) {
+    private void cycler(Text label, Text value, Runnable next, Visible visible) {
         LinearLayout row = newRow();
         TextView l = labelView(row);
         TextView v = valueView(120);
@@ -695,6 +835,7 @@ public class AutoClickService extends AccessibilityService {
         });
         row.addView(v);
         refreshers.add(() -> {
+            row.setVisibility(visible.now() ? View.VISIBLE : View.GONE);
             l.setText(label.now());
             v.setText(value.now());
         });
@@ -770,7 +911,8 @@ public class AutoClickService extends AccessibilityService {
         AutoClickStore.Target target = new AutoClickStore.Target();
         target.id = "t" + System.currentTimeMillis();
         config.targets.add(target);
-        config.mode = "multi"; // a second target turns a single-target macro into a sequence
+        // A second target turns a single-target macro into a sequence.
+        if ("single".equals(config.mode)) config.mode = "multi";
         selected = config.targets.size() - 1;
         rebuildMarkers();
         persist();
@@ -828,6 +970,7 @@ public class AutoClickService extends AccessibilityService {
         if (config == null) return;
         for (Marker m : markers) m.syncToTarget();
         AutoClickStore.save(this, config);
+        AutoClickStore.saveAppearance(this, appearance);
     }
 
     // ------------------------------------------------------------------
@@ -888,7 +1031,8 @@ public class AutoClickService extends AccessibilityService {
             this.target = target;
             this.index = index;
             this.isEnd = isEnd;
-            size = dp(isEnd ? 36 : 46);
+            int base = appearance.markerDp();
+            size = dp(isEnd ? Math.round(base * 0.78f) : base);
             view = new TextView(AutoClickService.this);
             view.setText(isEnd ? (index + 1) + "»" : String.valueOf(index + 1));
             view.setTextColor(Color.WHITE);
@@ -957,7 +1101,7 @@ public class AutoClickService extends AccessibilityService {
             if (!attached) return;
             if (on) params.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
             else params.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-            view.setAlpha(on ? 0.35f : 1f);
+            view.setAlpha(on ? (appearance.hideWhileRunning ? 0f : 0.35f) : 1f);
             try {
                 wm.updateViewLayout(view, params);
             } catch (RuntimeException ignored) {}
