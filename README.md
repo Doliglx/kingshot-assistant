@@ -14,7 +14,7 @@ It runs as an **Android app** (works offline) and as a **web app**, from one cod
 
 ## Why it exists
 
-It started as a handful of calculators for my alliance, to stop redoing the same sums in a spreadsheet before every event. Players kept asking for more, so it grew: first the troop maths, then rally coordination, which is the part of the game where a few seconds decide whether five rallies hit a castle together or one after the other.
+It started as a handful of calculators for my alliance, to stop redoing the same sums in a spreadsheet before every event. Players kept asking for more, so it grew: first the troop maths, then rally coordination, which is the part of the game where a few seconds decide whether three rallies hit a castle together or one after the other.
 
 Everything is built around how the game is actually played: you type the numbers the game shows you, and you get an answer you can act on or paste into alliance chat.
 
