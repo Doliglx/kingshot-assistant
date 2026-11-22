@@ -24,13 +24,19 @@ Everything is built around how the game is actually played: you type the numbers
 | Module | What it does |
 |---|---|
 | **Resource Chests** | Tells you what a stack of level 1–3 chests is worth, opened for a single resource or balanced across all four. |
-| **Frakinator** | Finds the infantry / cavalry / archer mix that maximises a rally's damage score for a leader's attack and lethality. |
+| **Frakinator** | Finds the infantry / cavalry / archer mix that maximises the damage score of a Bear Trap rally, from the leader's attack and lethality. Bear Trap only: see below. |
 | **March Ratio** | Splits a troop count by percentage. The three numbers always add up to the total. |
 | **Buff & Debuff** | Shows the real stat after a modifier. Stats multiply, so +10 % on a +200 % stat is +230 %, not +210 %. |
 | **Gather Time** | Converts the gathering time shown in game into the time you'd get with more speed bonus, and when it finishes. |
 | **Rally Timer** *(beta)* | Works out when each rally leader must launch so that everyone lands together. |
 | **Auto Clicker** *(test, Android)* | Taps the screen for you: one point in a loop, or a saved sequence of points. |
 | **Text Art** *(new, in test)* | Keeps your emoji art and message templates in folders, copies them in one tap exactly as saved, and previews how the game's chat will lay them out. |
+
+### Frakinator
+
+**Made for the Bear Trap only.** In Bear Trap, only attack and lethality count, which is why rallies use offensive joiners who buff those two stats. It has nothing to do with a regular PvP battle, so don't use the result for one.
+
+It is not perfect. Some hero skills buff one troop type and can change the ideal ratio. The module ignores hero skills and works from the stats you enter, nothing else.
 
 ### Rally Timer
 

@@ -57,6 +57,7 @@ export const es: AppText = {
     score: "Puntuación:",
     hintClick: "Pulsa Optimizar para calcular…",
     hintResults: "Los resultados aparecerán aquí",
+    note: "Solo para la Bear Trap (el oso). Allí solo cuentan el ataque y la letalidad, por eso se usan joiners ofensivos que mejoran esas dos estadísticas. No tiene nada que ver con una batalla PvP normal. El resultado no es perfecto: algunas habilidades de héroe mejoran un tipo de tropa y pueden cambiar la proporción ideal, y no se tienen en cuenta. Solo cuentan las estadísticas que introduces.",
     chartNote: (inf) => `Puntuación según la parte de arqueros (infantería fija en ${inf} %)`,
   },
   ratio: {

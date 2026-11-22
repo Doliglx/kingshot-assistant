@@ -57,6 +57,7 @@ export const tr: AppText = {
     score: "Puan:",
     hintClick: "Hesaplamak için Optimize et'e dokun…",
     hintResults: "Sonuçlar burada görünecek",
+    note: "Yalnızca Bear Trap (ayı) için. Orada sadece saldırı ve öldürücülük işe yarar; bu yüzden bu iki değeri artıran saldırı odaklı joiner'lar kullanılır. Normal bir PvP savaşıyla ilgisi yoktur. Sonuç mükemmel değildir: bazı kahraman yetenekleri tek bir birlik türünü güçlendirir ve ideal oranı değiştirebilir, ama bunlar hesaba katılmaz. Yalnızca girdiğin değerler hesaba katılır.",
     chartNote: (inf) => `Okçu payına göre puan (piyade %${inf} olarak sabit)`,
   },
   ratio: {

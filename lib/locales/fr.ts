@@ -57,6 +57,7 @@ export const fr: AppText = {
     score: "Score :",
     hintClick: "Appuyez sur Optimiser pour calculer…",
     hintResults: "Les résultats apparaîtront ici",
+    note: "Uniquement pour le Bear Trap (l'ours). Là-bas, seules l'attaque et la létalité comptent, ce qui explique pourquoi on utilise des joiners offensifs qui boostent ces deux stats. Cela n'a rien à voir avec un combat PvP classique. Le résultat n'est pas parfait : certains skills de héros boostent un type de troupes et peuvent changer le ratio idéal, ils ne sont pas pris en compte. Seules les stats saisies le sont.",
     chartNote: (inf) => `Score selon la part d'archers (infanterie fixée à ${inf} %)`,
   },
   ratio: {

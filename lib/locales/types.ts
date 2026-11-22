@@ -63,6 +63,7 @@ export interface AppText {
     score: string
     hintClick: string
     hintResults: string
+    note: string
     chartNote: (inf: number) => string
   }
   ratio: {

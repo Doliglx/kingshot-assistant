@@ -57,6 +57,7 @@ export const de: AppText = {
     score: "Wertung:",
     hintClick: "Tippe auf Optimieren, um zu rechnen…",
     hintResults: "Die Ergebnisse erscheinen hier",
+    note: "Nur für die Bear Trap (den Bären). Dort zählen nur Angriff und Letalität, deshalb setzt man offensive Joiner ein, die diese beiden Werte erhöhen. Mit einem normalen PvP-Kampf hat das nichts zu tun. Das Ergebnis ist nicht perfekt: Manche Heldenfähigkeiten stärken einen Truppentyp und können das ideale Verhältnis verändern. Sie werden nicht berücksichtigt, nur die eingegebenen Werte.",
     chartNote: (inf) => `Wertung nach Bogenschützen-Anteil (Infanterie fest bei ${inf} %)`,
   },
   ratio: {

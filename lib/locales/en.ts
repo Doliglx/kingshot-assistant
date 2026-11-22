@@ -57,6 +57,7 @@ export const en: AppText = {
     score: "Score:",
     hintClick: "Tap Optimise to calculate…",
     hintResults: "Results will appear here",
+    note: "For the Bear Trap only. There, only attack and lethality count, which is why rallies use offensive joiners who buff those two stats. It has nothing to do with a regular PvP battle. The result is not perfect: some hero skills buff one troop type and can change the ideal ratio, and they are not taken into account. Only the stats you enter are.",
     chartNote: (inf) => `Score by archer share (infantry fixed at ${inf}%)`,
   },
   ratio: {

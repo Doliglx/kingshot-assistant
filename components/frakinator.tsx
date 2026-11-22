@@ -47,6 +47,9 @@ export function Frakinator() {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
+          <p className="mb-6 rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm leading-relaxed">
+            {t.frak.note}
+          </p>
           <div className="mb-6 grid gap-6 sm:grid-cols-3">
             {TROOPS.map(({ key, icon: Icon, tint }) => (
               <div key={key} className="space-y-3">
