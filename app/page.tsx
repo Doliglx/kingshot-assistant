@@ -28,6 +28,7 @@ import { GatherTimeCalculator } from "@/components/gather-time-calculator"
 import { RallyTiming } from "@/components/rally-timing"
 import { AutoClicker } from "@/components/auto-clicker"
 import { TextArtModule } from "@/components/text-art"
+import { handleBack } from "@/lib/back-stack"
 
 type ModuleId = "rss" | "fraki" | "ratio" | "buff" | "gather" | "rally" | "clicker" | "textart"
 
@@ -75,13 +76,14 @@ export default function KingshotAssistant() {
     }, EXIT_MS)
   }, [])
 
-  // Android back button: settings → module → leave the app.
+  // Android back button: settings → screen inside the module → module → leave the app.
   const stateRef = useRef({ active, settingsOpen })
   stateRef.current = { active, settingsOpen }
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     const sub = CapacitorApp.addListener("backButton", () => {
       if (stateRef.current.settingsOpen) setSettingsOpen(false)
+      else if (handleBack()) return
       else if (stateRef.current.active) close()
       else void CapacitorApp.exitApp()
     })
@@ -94,6 +96,7 @@ export default function KingshotAssistant() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return
       if (stateRef.current.settingsOpen) setSettingsOpen(false)
+      else if (handleBack()) return
       else if (stateRef.current.active) close()
     }
     window.addEventListener("keydown", onKey)

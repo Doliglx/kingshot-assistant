@@ -229,7 +229,6 @@ export interface AppText {
     measured: string
     showSpaces: string
     broken: string
-    newlineNote: string
     delete: string
     deleteConfirm: string
     duplicate: string

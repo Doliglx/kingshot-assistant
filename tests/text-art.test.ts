@@ -70,6 +70,44 @@ describe("chat layout", () => {
   })
 })
 
+describe("text in the game's font", () => {
+  // Measured on an in-game screenshot: one long message repeating these
+  // 36 characters, and the number of characters the game put on each line.
+  const S = "azertyuiopqsdfghjklmwxcvbn1234567890"
+  const GAME = [31, 31, 30, 30, 30, 29, 31, 31, 30, 31, 30, 29, 31, 31, 30, 31]
+
+  it("breaks long text like the game, at most one character off", () => {
+    const lines = layoutChat(S.repeat(14))
+    let pos = 0
+    let exact = 0
+    GAME.forEach((n, k) => {
+      // Lay out each game line from where the game started it.
+      const ours = layoutChat(S.repeat(14).slice(pos))[0].chars.length
+      assert.ok(Math.abs(ours - n) <= 1, `line ${k + 1}: ${ours} vs ${n}`)
+      if (ours === n) exact++
+      pos += n
+    })
+    assert.ok(exact >= 13, `${exact} lines exact`)
+    assert.ok(lines.length > 10)
+  })
+
+  it("keeps kaomoji narrow, as the game does", () => {
+    // Widths of these characters in the phone's fallback font (measured).
+    const em: Record<string, number> = { "ᐢ": 0.389, "•": 0.524, "ﻌ": 0.482 }
+    const measure = (g: string) => em[g]
+    const k = "\\(ᐢ•ﻌ•ᐢ)/"
+    const f = (n: number) => "🔥".repeat(n)
+    // In the game: " 🔥×6 K 🔥🔥 K 🔥" then "🔥🔥🔥 K 🔥×5 K .🔥".
+    const lines = layoutChat(` ${f(6)}${k}${f(2)}${k}${f(4)}${k}${f(5)}${k}.${f(2)}`, 16, measure)
+    assert.equal(row(lines[0].chars), ` ${f(6)}${k}${f(2)}${k}${f(1)}`)
+    assert.equal(row(lines[1].chars), `${f(3)}${k}${f(5)}${k}.${f(1)}`)
+  })
+
+  it("keeps indentation at the start of a line", () => {
+    assert.equal(row(layoutChat("  ab")[0].chars), "  ab")
+  })
+})
+
 describe("characters", () => {
   it("counts an emoji with modifiers as one character", () => {
     assert.deepEqual(graphemes("👍🏽◼️🇫🇷"), ["👍🏽", "◼️", "🇫🇷"])
@@ -77,7 +115,7 @@ describe("characters", () => {
 
   it("knows which characters are wide", () => {
     for (const g of ["◼", "◻", "🍀", "⚪", "💙", "🌕", "📜", "　", "漢"]) assert.ok(isWide(g), g)
-    for (const g of ["a", "Z", "1", " "]) assert.ok(!isWide(g), g)
+    for (const g of ["a", "Z", "1", " ", "ᐢ", "•", "≡", "▬", "´"]) assert.ok(!isWide(g), g)
   })
 
   it("reports what a damaged paste would change", () => {

@@ -118,35 +118,72 @@ export function graphemes(text: string): string[] {
 
 export const IDEOGRAPHIC_SPACE = "　"
 
-const WIDE =
-  /\p{Extended_Pictographic}|\p{Regional_Indicator}|[ᄀ-ᅟ☀-➿⬀-⯿■-◿⺀-〿぀-㏿㐀-䶿一-鿿ꥠ-꥿가-힯豈-﫿︰-﹏＀-｠￠-￦]/u
-
-/** True for a character that takes a full cell in the chat (emoji, squares, CJK, ideographic space). */
-export function isWide(g: string): boolean {
-  return WIDE.test(g)
-}
+// ---------------------------------------------------------------------
+// Character widths
 
 /**
- * Width of a character in cells (1 cell = one emoji).
- * Narrow widths are estimates for the game's bold sans-serif font.
+ * The game's chat font looks like Nunito Bold (calibrated on screenshots of
+ * long lines of letters and digits). Advance widths of printable ASCII
+ * (U+0020 to U+007E) in Nunito 700, in thousandths of the font size.
  */
-export function cellWidth(g: string): number {
-  if (g === " ") return 0.3
+const NUNITO_ASCII = [
+  271, 248, 448, 600, 600, 945, 726, 243, 358, 358, 453, 600, 248, 434, 248, 313, 600, 600, 600, 600, 600, 600, 600, 600,
+  600, 600, 248, 248, 600, 600, 600, 459, 950, 744, 688, 680, 762, 597, 562, 736, 773, 282, 354, 665, 562, 868, 748, 785,
+  652, 785, 686, 631, 621, 738, 713, 1113, 672, 618, 605, 354, 313, 354, 600, 500, 377, 547, 600, 472, 600, 542, 364, 604,
+  585, 255, 259, 536, 319, 877, 585, 576, 600, 600, 392, 488, 384, 579, 527, 853, 546, 526, 474, 391, 288, 391, 600,
+]
+
+/** One emoji cell, in font sizes (measured: 36.6 px cells for 35.9 px text). */
+export const CELL_EM = 1.02
+
+/** Width in font sizes of a narrow character, or undefined when unknown. */
+export type Measure = (g: string) => number | undefined
+
+/** Without a measurement (tests, first render): ASCII table, otherwise an average width. */
+export function estimateEm(g: string): number {
+  const c = g.length === 1 ? g.charCodeAt(0) : 0
+  if (c >= 32 && c < 127) return NUNITO_ASCII[c - 32] / 1000
+  return 0.55
+}
+
+const CJK =
+  /[ᄀ-ᅟ⺀-〿぀-ヿ㇀-㏿㐀-䶿一-鿿ꥠ-꥿가-힯豈-﫿︰-﹏＀-｠￠-￦]/u
+const TEXT_DEFAULT = /^[©®™‼⁉#*0-9]$/
+
+/**
+ * True for a character drawn in a fixed square cell: emoji (the game draws
+ * them like Apple's), the squares used for pixel art, CJK and fullwidth
+ * characters, and the ideographic space. Everything else is text in the
+ * game's font and keeps its own width.
+ */
+export function isCjk(g: string): boolean {
+  return CJK.test(g)
+}
+
+export function isWide(g: string): boolean {
+  if (/[\u{FE0F}\u{200D}\u{20E3}]|\p{Regional_Indicator}|\p{Emoji_Presentation}/u.test(g)) return true
+  if (/\p{Extended_Pictographic}/u.test(g) && /\p{Emoji}/u.test(g) && !TEXT_DEFAULT.test(g)) return true
+  return CJK.test(g)
+}
+
+/** Width of a character in cells (1 cell = one emoji). */
+export function cellWidth(g: string, measure?: Measure): number {
   if (g === "\t") return 1.2
   if (isWide(g)) return 1
-  if (/[iljI.,:;'!|`]/.test(g)) return 0.28
-  if (/[mwMW@]/.test(g)) return 0.85
-  if (/[A-Z0-9]/.test(g)) return 0.62
-  return 0.52
+  return (measure?.(g) ?? estimateEm(g)) / CELL_EM
 }
 
 // ---------------------------------------------------------------------
 // Chat layout
 
-/** Measured: 16 wide characters fit on a line, 17 do not. */
+/** Measured: 16 emoji fit on a line, 17 do not. */
 export const DEFAULT_LINE_CELLS = 16
-/** Lines hold up to this many cells (between 16 and 17 for the default). */
-const capacity = (cells: number) => cells + 0.5
+/**
+ * Room on a line, in cells. 16.55 cells for the default: fits 16 emoji and
+ * reproduces 13 of the 16 measured breaks in long text exactly, the 3 others
+ * by one character (the game's font is close to Nunito, not identical).
+ */
+const capacity = (cells: number) => cells + 0.55
 
 export interface LaidOutLine {
   /** Characters on the line, trailing spaces removed (they are not drawn). */
@@ -162,44 +199,45 @@ export interface LaidOutLine {
  *  - a run longer than a whole line is cut character by character;
  *  - a newline always starts a new line.
  */
-export function layoutChat(text: string, cells = DEFAULT_LINE_CELLS): LaidOutLine[] {
+export function layoutChat(text: string, cells = DEFAULT_LINE_CELLS, measure?: Measure): LaidOutLine[] {
   const max = capacity(cells)
+  const width = (g: string) => cellWidth(g, measure)
   const lines: LaidOutLine[] = []
   const paragraphs = text.replace(/\r\n?/g, "\n").split("\n")
 
   paragraphs.forEach((para, p) => {
     let line: string[] = []
-    let width = 0
+    let used = 0
     const flush = () => {
       while (line.length && line[line.length - 1] === " ") line.pop()
       lines.push({ chars: line, hardBreak: false })
       line = []
-      width = 0
+      used = 0
     }
 
     const words = para.split(" ")
     words.forEach((word, w) => {
       const chars = graphemes(word)
-      const wordWidth = chars.reduce((sum, g) => sum + cellWidth(g), 0)
-      const space = w > 0 ? cellWidth(" ") : 0
+      const wordWidth = chars.reduce((sum, g) => sum + width(g), 0)
+      const space = w > 0 ? width(" ") : 0
 
-      if (line.length > 0 && width + space + wordWidth > max) flush()
-      else if (w > 0 && line.length > 0) {
+      if (line.length > 0 && used + space + wordWidth > max) flush()
+      else if (w > 0) {
         line.push(" ")
-        width += space
+        used += space
       }
 
-      if (wordWidth <= max - width) {
+      if (wordWidth <= max - used) {
         line.push(...chars)
-        width += wordWidth
+        used += wordWidth
         return
       }
       // Longer than a whole line: cut it wherever the line is full.
       for (const g of chars) {
-        const gw = cellWidth(g)
-        if (width + gw > max && line.length > 0) flush()
+        const gw = width(g)
+        if (used + gw > max && line.length > 0) flush()
         line.push(g)
-        width += gw
+        used += gw
       }
     })
     flush()

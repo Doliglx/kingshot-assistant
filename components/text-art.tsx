@@ -23,12 +23,15 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { useSettings } from "@/components/app-settings"
 import { copyText, readText } from "@/lib/clipboard"
+import { gameFont } from "@/lib/game-font"
+import { onBack } from "@/lib/back-stack"
 import {
   ART_LIMITS,
   DEFAULT_LINE_CELLS,
   EXAMPLE_ART,
   IDEOGRAPHIC_SPACE,
-  cellWidth,
+  CELL_EM,
+  isCjk,
   isWide,
   layoutChat,
   loadLibrary,
@@ -37,6 +40,7 @@ import {
   saveLibrary,
   textStats,
   type ArtLibrary,
+  type Measure,
   type TextArt,
 } from "@/lib/text-art"
 
@@ -75,6 +79,65 @@ const TILES: Record<string, { size: number; background: string; border: string }
 }
 
 const EMOJI_FONT = '"Apple Color Emoji","Noto Color Emoji","Segoe UI Emoji","Segoe UI Symbol",sans-serif'
+const GAME_FONT = `${gameFont.style.fontFamily}, sans-serif`
+
+/**
+ * Real widths of non-ASCII text characters (kaomoji parts, accents, box
+ * drawing...) in the game-like font and the phone's fallback fonts, measured
+ * once the font has loaded for that text. ASCII uses the built-in table.
+ */
+const widthCache = new Map<string, number>()
+let measureCtx: CanvasRenderingContext2D | null = null
+const measureEm: Measure = (g) => {
+  if (g.length === 1 && g.charCodeAt(0) < 127) return undefined
+  const hit = widthCache.get(g)
+  if (hit !== undefined) return hit
+  if (!measureCtx) {
+    measureCtx = document.createElement("canvas").getContext("2d")
+    if (!measureCtx) return undefined
+  }
+  measureCtx.font = `700 100px ${GAME_FONT}`
+  const em = measureCtx.measureText(g).width / 100
+  if (!(em > 0)) return undefined
+  widthCache.set(g, em)
+  return em
+}
+
+/** Measuring is only reliable once the font (and its subsets for this text) has loaded. */
+function useFontReady(text: string): boolean {
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    let alive = true
+    const fonts = typeof document !== "undefined" ? document.fonts : undefined
+    if (!fonts) return setReady(true)
+    fonts
+      .load(`700 16px ${GAME_FONT}`, text || "a")
+      .catch(() => undefined)
+      .then(() => alive && setReady(true))
+    return () => {
+      alive = false
+    }
+  }, [text])
+  return ready
+}
+
+type Piece = { kind: "text"; text: string } | { kind: "cell"; g: string }
+
+/** Groups a line into runs of text (drawn in the font) and fixed cells. */
+function pieces(chars: string[], splitSpaces: boolean): Piece[] {
+  const out: Piece[] = []
+  for (const g of chars) {
+    if (isWide(g)) {
+      out.push({ kind: "cell", g })
+      continue
+    }
+    const last = out[out.length - 1]
+    const isSpace = g === " "
+    if (last?.kind === "text" && !(splitSpaces && (isSpace || last.text.endsWith(" ")))) last.text += g
+    else out.push({ kind: "text", text: g })
+  }
+  return out
+}
 
 const GameBubble = memo(function GameBubble({
   text,
@@ -92,6 +155,7 @@ const GameBubble = memo(function GameBubble({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
+  const fontReady = useFontReady(text)
 
   useEffect(() => {
     const el = ref.current
@@ -104,12 +168,13 @@ const GameBubble = memo(function GameBubble({
   }, [])
 
   const lines = useMemo(() => {
-    const all = layoutChat(text, cells)
+    const all = layoutChat(text, cells, fontReady ? measureEm : undefined)
     return maxLines ? all.slice(0, maxLines) : all
-  }, [text, cells, maxLines])
+  }, [text, cells, maxLines, fontReady])
 
   // The game's bubble is about (cells + 3) emoji wide, padding included.
   const cell = width > 0 ? Math.min(34, width / (cells + 3)) : 0
+  const fontSize = cell / CELL_EM
 
   return (
     <div ref={ref} className={cn("w-full", className)}>
@@ -122,20 +187,35 @@ const GameBubble = memo(function GameBubble({
           }}
         >
           {lines.map((line, i) => (
-            <div key={i} className="flex" style={{ height: cell * 1.28, alignItems: "center" }}>
-              {line.chars.map((g, j) => {
-                const w = cellWidth(g) * cell
-                if (g === IDEOGRAPHIC_SPACE || g === " ") {
+            <div
+              key={i}
+              className="flex items-center whitespace-pre"
+              style={{ height: cell * 1.28, fontFamily: GAME_FONT, fontWeight: 700, fontSize, fontKerning: "none" }}
+            >
+              {pieces(line.chars, showSpaces).map((piece, j) => {
+                if (piece.kind === "text") {
+                  const space = showSpaces && piece.text.startsWith(" ")
+                  return (
+                    <span
+                      key={j}
+                      className="shrink-0 leading-none"
+                      style={space ? { background: "rgb(224 87 60 / 0.35)" } : undefined}
+                    >
+                      {piece.text}
+                    </span>
+                  )
+                }
+                const g = piece.g
+                if (g === IDEOGRAPHIC_SPACE) {
                   return (
                     <span
                       key={j}
                       className="inline-block shrink-0"
                       style={{
-                        width: w,
+                        width: cell,
                         height: cell * 0.9,
                         outline: showSpaces ? "1px dashed rgb(59 42 26 / 0.35)" : undefined,
                         outlineOffset: -2,
-                        background: showSpaces && g === " " ? "rgb(224 87 60 / 0.35)" : undefined,
                       }}
                     />
                   )
@@ -143,7 +223,7 @@ const GameBubble = memo(function GameBubble({
                 const tile = TILES[g.replace("\uFE0F", "")]
                 if (tile) {
                   return (
-                    <span key={j} className="inline-flex shrink-0 items-center justify-center" style={{ width: w }}>
+                    <span key={j} className="inline-flex shrink-0 items-center justify-center" style={{ width: cell }}>
                       <span
                         style={{
                           width: cell * tile.size,
@@ -157,19 +237,19 @@ const GameBubble = memo(function GameBubble({
                     </span>
                   )
                 }
-                const wide = isWide(g)
+                const cjk = isCjk(g)
                 return (
                   <span
                     key={j}
                     className="inline-flex shrink-0 items-center justify-center overflow-visible leading-none"
                     style={{
-                      width: w,
-                      fontSize: wide ? cell * 0.94 : cell * 0.72,
-                      fontFamily: wide ? EMOJI_FONT : undefined,
-                      fontWeight: wide ? undefined : 700,
+                      width: cell,
+                      fontSize: cjk ? fontSize : cell * 0.94,
+                      fontFamily: cjk ? GAME_FONT : EMOJI_FONT,
+                      fontWeight: cjk ? 700 : 400,
                     }}
                   >
-                    {wide ? emojiForm(g) : g}
+                    {cjk ? g : emojiForm(g)}
                   </span>
                 )
               })}
@@ -196,6 +276,7 @@ export function TextArtModule() {
   const [cells, setCells] = useState(DEFAULT_LINE_CELLS)
   const [toast, setToast] = useState("")
   const [folderInput, setFolderInput] = useState<{ mode: "new" | "rename"; value: string } | null>(null)
+  const [previewId, setPreviewId] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Load, and add the example the very first time.
@@ -292,9 +373,13 @@ export function TextArtModule() {
     setFilter("all")
   }
 
+  // Android back button / Escape: leave the editor before the module.
+  useEffect(() => (editingId ? onBack(() => setEditingId(null)) : undefined), [editingId])
+
   if (!loaded) return null
 
   const editing = editingId ? (lib.items.find((i) => i.id === editingId) ?? null) : null
+  const previewing = previewId ? (lib.items.find((i) => i.id === previewId) ?? null) : null
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -448,14 +533,34 @@ export function TextArtModule() {
                   folder={art.folderId ? folderName(art.folderId) : ""}
                   cells={cells}
                   copyLabel={a.copy}
+                  previewLabel={a.preview}
                   untitled={a.untitled}
                   onOpen={() => setEditingId(art.id)}
                   onCopy={() => copy(art.text)}
+                  onPreview={() => setPreviewId(art.id)}
                 />
               ))}
             </div>
           )}
         </>
+      )}
+
+      {/* One-tap preview of a whole template, from the list */}
+      {previewing && !editing && (
+        <PreviewSheet
+          art={previewing}
+          cells={cells}
+          title={previewing.name || a.untitled}
+          copyLabel={a.copy}
+          editLabel={a.edit}
+          closeLabel={t.common.close}
+          onCopy={() => copy(previewing.text)}
+          onEdit={() => {
+            setPreviewId(null)
+            setEditingId(previewing.id)
+          }}
+          onClose={() => setPreviewId(null)}
+        />
       )}
 
       {/* Copy confirmation */}
@@ -475,17 +580,21 @@ const ArtCard = memo(function ArtCard({
   folder,
   cells,
   copyLabel,
+  previewLabel,
   untitled,
   onOpen,
   onCopy,
+  onPreview,
 }: {
   art: TextArt
   folder: string
   cells: number
   copyLabel: string
+  previewLabel: string
   untitled: string
   onOpen: () => void
   onCopy: () => void
+  onPreview: () => void
 }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card">
@@ -499,15 +608,86 @@ const ArtCard = memo(function ArtCard({
           {folder && <span className="block truncate text-xs text-muted-foreground">{folder}</span>}
         </div>
       </button>
-      <div className="p-3 pt-2">
-        <Button type="button" size="sm" className="w-full" onClick={onCopy}>
+      <div className="flex gap-2 p-3 pt-2">
+        <Button type="button" size="sm" className="flex-1" onClick={onCopy}>
           <Copy className="h-4 w-4" />
           {copyLabel}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="px-3"
+          onClick={onPreview}
+          aria-label={previewLabel}
+          title={previewLabel}
+        >
+          <Eye className="h-4 w-4" />
         </Button>
       </div>
     </div>
   )
 })
+
+function PreviewSheet({
+  art,
+  cells,
+  title,
+  copyLabel,
+  editLabel,
+  closeLabel,
+  onCopy,
+  onEdit,
+  onClose,
+}: {
+  art: TextArt
+  cells: number
+  title: string
+  copyLabel: string
+  editLabel: string
+  closeLabel: string
+  onCopy: () => void
+  onEdit: () => void
+  onClose: () => void
+}) {
+  // Android back button / Escape closes the sheet, not the module.
+  useEffect(() => onBack(onClose), [onClose])
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      className="fade-enter fixed inset-0 z-50 flex flex-col bg-black/85 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="flex items-center gap-2 px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
+        <span className="min-w-0 flex-1 truncate font-semibold text-white">{title}</span>
+        <Button type="button" size="icon" variant="outline" aria-label={closeLabel} onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2" onClick={(e) => e.stopPropagation()}>
+        <div className="mx-auto max-w-xl rounded-xl bg-[#2a1d12] p-3">
+          <GameBubble text={art.text} cells={cells} />
+        </div>
+      </div>
+      <div
+        className="mx-auto flex w-full max-w-xl gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Button type="button" className="h-11 flex-1 font-bold" onClick={onCopy} disabled={!art.text}>
+          <Copy className="h-4 w-4" />
+          {copyLabel}
+        </Button>
+        <Button type="button" variant="outline" className="h-11" onClick={onEdit}>
+          <Pencil className="h-4 w-4" />
+          {editLabel}
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 function ArtEditor({
   art,
@@ -611,11 +791,6 @@ function ArtEditor({
           </div>
           {stats.broken > 0 && (
             <p className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-300">{a.broken}</p>
-          )}
-          {stats.newlines > 0 && (
-            <p className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-xs text-yellow-200">
-              {a.newlineNote}
-            </p>
           )}
 
           <Button type="button" className="h-12 w-full text-base font-bold" onClick={onCopy} disabled={!art.text}>
