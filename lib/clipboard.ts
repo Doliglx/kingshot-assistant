@@ -29,3 +29,17 @@ export async function copyText(text: string): Promise<boolean> {
     return false
   }
 }
+
+/** Reads plain text from the clipboard, unchanged; null when not allowed or empty. */
+export async function readText(): Promise<string | null> {
+  try {
+    if (Capacitor.isNativePlatform()) {
+      const { type, value } = await Clipboard.read()
+      return type.startsWith("text") && value ? value : null
+    }
+    if (navigator.clipboard?.readText) return (await navigator.clipboard.readText()) || null
+  } catch {
+    // permission refused or no text
+  }
+  return null
+}

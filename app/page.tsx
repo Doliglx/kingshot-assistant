@@ -6,6 +6,7 @@ import { App as CapacitorApp } from "@capacitor/app"
 import {
   ArrowLeft,
   Crosshair,
+  MessageSquareText,
   MousePointerClick,
   Package,
   Settings as SettingsIcon,
@@ -26,13 +27,14 @@ import { BuffDebuffCalculator } from "@/components/buff-debuff-calculator"
 import { GatherTimeCalculator } from "@/components/gather-time-calculator"
 import { RallyTiming } from "@/components/rally-timing"
 import { AutoClicker } from "@/components/auto-clicker"
+import { TextArtModule } from "@/components/text-art"
 
-type ModuleId = "rss" | "fraki" | "ratio" | "buff" | "gather" | "rally" | "clicker"
+type ModuleId = "rss" | "fraki" | "ratio" | "buff" | "gather" | "rally" | "clicker" | "textart"
 
 const MODULES: {
   id: ModuleId
   icon: LucideIcon
-  badge?: "Beta" | "Test"
+  badge?: "Beta" | "Test" | "New"
   Component: React.ComponentType
 }[] = [
   { id: "rss", icon: Package, Component: ResourceCalculator },
@@ -42,6 +44,7 @@ const MODULES: {
   { id: "gather", icon: Timer, Component: GatherTimeCalculator },
   { id: "rally", icon: Crosshair, badge: "Beta", Component: RallyTiming },
   { id: "clicker", icon: MousePointerClick, badge: "Test", Component: AutoClicker },
+  { id: "textart", icon: MessageSquareText, badge: "New", Component: TextArtModule },
 ]
 
 const EXIT_MS = 220

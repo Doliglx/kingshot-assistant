@@ -31,6 +31,7 @@ export interface AppText {
       gather: ModuleLabel
       rally: ModuleLabel
       clicker: ModuleLabel
+      textart: ModuleLabel
     }
   }
   settings: {
@@ -201,5 +202,45 @@ export interface AppText {
       startsIn: string
       done: string
     }
+  }
+  art: {
+    intro: string
+    search: string
+    all: string
+    noFolder: string
+    newFolder: string
+    folderName: string
+    rename: string
+    deleteFolder: string
+    deleteFolderConfirm: string
+    newArt: string
+    untitled: string
+    empty: string
+    copy: string
+    copied: string
+    copyFailed: string
+    edit: string
+    name: string
+    folder: string
+    textPlaceholder: string
+    paste: string
+    preview: string
+    previewNote: string
+    measured: string
+    showSpaces: string
+    broken: string
+    newlineNote: string
+    delete: string
+    deleteConfirm: string
+    duplicate: string
+    sortRecent: string
+    sortName: string
+    exampleName: string
+    exampleFolder: string
+    storageFull: string
+    saved: string
+    bubbleWidth: (n: number) => string
+    stats: (chars: number, lines: number) => string
+    spacesInfo: (ideo: number, plain: number) => string
   }
 }
