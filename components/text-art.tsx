@@ -344,8 +344,6 @@ export function TextArtModule() {
             back: t.common.back,
             close: t.common.close,
             untitled: a.untitled,
-            previous: a.previous,
-            next: a.next,
           }}
           onCopy={(art) => copy(art.text)}
           onEdit={(art) => {

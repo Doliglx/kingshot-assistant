@@ -90,7 +90,7 @@ For the emoji drawings and ready-made messages people paste into alliance chat. 
 
 - **Folders and search.** Sort templates into folders, search by name or content, order by recent or name.
 - **Exact copy.** *Copy* puts the stored text on the clipboard as it was saved: no trimming, no normalising, so spaces (including ideographic ones used for indentation) and line breaks survive. Pasting from the clipboard into a template works the same way.
-- **In-game preview.** The preview lays the text out the way the game's chat bubble does, calibrated on screenshots from the game: 16 emoji per line, breaks at normal spaces, and a font close to the game's. The 👁 button on each template in the list opens a full-screen viewer, one template at a time: swipe left or right (or use the arrows) to go through the list, and use back or ✕ to close it.
+- **In-game preview.** The preview lays the text out the way the game's chat bubble does, calibrated on screenshots from the game: 16 emoji per line, breaks at normal spaces, and a font close to the game's. The 👁 button on each template in the list opens a full-screen viewer, one template at a time: swipe left or right to go through the list, and use back or ✕ to close it.
 - **Known limits.** Emoji are drawn by your phone, so they can look a little different from the game's. On long lines of plain text a break can land one character away from where the game puts it. The bubble width can be changed if you want to test other sizes.
 - **Paste checks.** The editor counts characters and spaces, and warns when a character was lost on the way in (a damaged paste).
 

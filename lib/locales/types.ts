@@ -282,8 +282,6 @@ export interface AppText {
     folder: string
     textPlaceholder: string
     paste: string
-    previous: string
-    next: string
     preview: string
     previewNote: string
     measured: string

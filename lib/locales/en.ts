@@ -287,8 +287,6 @@ export const en: AppText = {
     folder: "Folder",
     textPlaceholder: "Paste or type your text art here",
     paste: "Paste",
-    previous: "Previous",
-    next: "Next",
     preview: "In-game preview",
     previewNote: "Same line breaks, spacing and indentation as the game's chat bubble, with a font close to the game's. On long lines of text a break can land one character off. Emoji are drawn by your phone, so they can look a little different from the game's.",
     measured: "16 = measured in the game's chat",

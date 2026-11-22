@@ -562,6 +562,13 @@
   }
 }
 
+/* Gallery slides scroll up and down by themselves; sideways touches are ours (the swipe).
+   Without this the browser claims them first and cancels the gesture on a real touch screen. */
+.art-slide,
+.art-slide * {
+  touch-action: pan-y;
+}
+
 /* ------------------------------------------------------------------
    Moving the home tiles
    ------------------------------------------------------------------ */

@@ -287,8 +287,6 @@ export const fr: AppText = {
     folder: "Dossier",
     textPlaceholder: "Collez ou tapez votre dessin ici",
     paste: "Coller",
-    previous: "Pr\u00e9c\u00e9dent",
-    next: "Suivant",
     preview: "Aperçu en jeu",
     previewNote: "Mêmes retours à la ligne, espacements et indentations que la bulle du chat du jeu, avec une police proche de celle du jeu. Sur de longues lignes de texte, une coupure peut tomber un caractère plus tôt ou plus tard. Les emoji sont dessinés par votre téléphone : ils peuvent différer un peu de ceux du jeu.",
     measured: "16 = valeur mesurée dans le chat du jeu",
