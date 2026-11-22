@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SettingsProvider } from '@/components/app-settings'
+import { SheetsProvider } from '@/components/action-sheet'
 import './globals.css'
 
 const _geist = Geist({ subsets: ['latin', 'latin-ext', 'cyrillic'] })
@@ -29,7 +30,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="font-sans antialiased">
-        <SettingsProvider>{children}</SettingsProvider>
+        <SettingsProvider>
+          <SheetsProvider>{children}</SheetsProvider>
+        </SettingsProvider>
         {process.env.NODE_ENV === 'production' && process.env.BUILD_TARGET !== 'android' && <Analytics />}
       </body>
     </html>

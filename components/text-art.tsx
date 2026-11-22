@@ -4,13 +4,16 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import {
   ArrowLeft,
+  ArrowRight,
   Check,
   ClipboardPaste,
   Copy,
   Eye,
   EyeOff,
   Folder,
+  FolderInput,
   FolderPlus,
+  MoreHorizontal,
   Pencil,
   Plus,
   Search,
@@ -27,6 +30,8 @@ import { copyText, readText } from "@/lib/clipboard"
 import { GameBubble, EMOJI_FONT } from "@/components/game-bubble"
 import { ArtGallery } from "@/components/art-gallery"
 import { onBack } from "@/lib/back-stack"
+import { HoldHint, useSheets } from "@/components/action-sheet"
+import { longPress } from "@/lib/long-press"
 import {
   ART_LIMITS,
   DEFAULT_LINE_CELLS,
@@ -54,6 +59,8 @@ type FolderFilter = "all" | "none" | string
 export function TextArtModule() {
   const { t } = useSettings()
   const a = t.art
+  const m = t.menu
+  const sheets = useSheets()
   const [lib, setLib] = useState<ArtLibrary>({ folders: [], items: [] })
   const [loaded, setLoaded] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -62,7 +69,7 @@ export function TextArtModule() {
   const [sort, setSort] = useState<"recent" | "name">("recent")
   const [cells, setCells] = useState(DEFAULT_LINE_CELLS)
   const [toast, setToast] = useState("")
-  const [folderInput, setFolderInput] = useState<{ mode: "new" | "rename"; value: string } | null>(null)
+  const [folderInput, setFolderInput] = useState<{ mode: "new"; value: string } | null>(null)
   const [previewId, setPreviewId] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -144,20 +151,133 @@ export function TextArtModule() {
       const folder = newFolder(name)
       commit({ ...lib, folders: [...lib.folders, folder] })
       setFilter(folder.id)
-    } else {
-      commit({ ...lib, folders: lib.folders.map((f) => (f.id === filter ? { ...f, name } : f)) })
     }
     setFolderInput(null)
   }
 
-  const deleteFolder = () => {
-    if (filter === "all" || filter === "none") return
-    if (!window.confirm(a.deleteFolderConfirm)) return
-    commit({
-      folders: lib.folders.filter((f) => f.id !== filter),
-      items: lib.items.map((i) => (i.folderId === filter ? { ...i, folderId: null } : i)),
+  const renameFolder = async (id: string) => {
+    const name = await sheets.prompt({
+      title: m.rename,
+      label: a.folderName,
+      value: folderName(id),
+      confirmLabel: m.rename,
+      maxLength: ART_LIMITS.name,
     })
-    setFilter("all")
+    if (name) commit({ ...lib, folders: lib.folders.map((f) => (f.id === id ? { ...f, name } : f)) })
+  }
+
+  /** Moves a folder one place in the row of chips. */
+  const moveFolder = (id: string, delta: number) => {
+    const from = lib.folders.findIndex((f) => f.id === id)
+    const to = Math.min(lib.folders.length - 1, Math.max(0, from + delta))
+    if (from < 0 || to === from) return
+    const folders = [...lib.folders]
+    const [f] = folders.splice(from, 1)
+    folders.splice(to, 0, f)
+    commit({ ...lib, folders })
+  }
+
+  const deleteFolder = async (id: string) => {
+    const ok = await sheets.confirm({
+      title: m.deleteTitle(folderName(id)),
+      message: m.deleteFolder,
+      confirmLabel: m.delete,
+    })
+    if (!ok) return
+    commit({
+      folders: lib.folders.filter((f) => f.id !== id),
+      items: lib.items.map((i) => (i.folderId === id ? { ...i, folderId: null } : i)),
+    })
+    if (filter === id) setFilter("all")
+  }
+
+  const deleteArt = async (art: TextArt): Promise<boolean> => {
+    const ok = await sheets.confirm({
+      title: m.deleteTitle(art.name || a.untitled),
+      message: m.deleteTemplate,
+      confirmLabel: m.delete,
+    })
+    if (!ok) return false
+    commit({ ...lib, items: lib.items.filter((i) => i.id !== art.id) })
+    return true
+  }
+
+  const duplicateArt = (art: TextArt): TextArt | null => {
+    if (lib.items.length >= ART_LIMITS.items) return null
+    const copyArt = newArt(`${art.name} 2`, art.text, art.folderId)
+    commit({ ...lib, items: [copyArt, ...lib.items] })
+    return copyArt
+  }
+
+  /** Where a template goes: any folder, none, or a new one. */
+  const openMoveMenu = (art: TextArt) => {
+    const to = (folderId: string | null) =>
+      commit({ ...lib, items: lib.items.map((i) => (i.id === art.id ? { ...i, folderId, updatedAt: Date.now() } : i)) })
+    sheets.openMenu({
+      title: m.moveTo,
+      subtitle: art.name || a.untitled,
+      actions: [
+        ...lib.folders
+          .filter((f) => f.id !== art.folderId)
+          .map((f) => ({ id: f.id, label: f.name || a.untitled, icon: Folder, onSelect: () => to(f.id) })),
+        ...(art.folderId !== null ? [{ id: "none", label: a.noFolder, icon: Folder, onSelect: () => to(null) }] : []),
+        {
+          id: "new",
+          label: a.newFolder,
+          icon: FolderPlus,
+          onSelect: () =>
+            void (async () => {
+              if (lib.folders.length >= ART_LIMITS.folders) return
+              const name = await sheets.prompt({
+                title: a.newFolder,
+                label: a.folderName,
+                value: "",
+                confirmLabel: m.ok,
+                maxLength: ART_LIMITS.name,
+              })
+              if (!name) return
+              const folder = newFolder(name)
+              commit({
+                folders: [...lib.folders, folder],
+                items: lib.items.map((i) => (i.id === art.id ? { ...i, folderId: folder.id, updatedAt: Date.now() } : i)),
+              })
+            })(),
+        },
+      ],
+    })
+  }
+
+  /** Held template: everything the card and the editor offer, in one place. */
+  const openArtMenu = (art: TextArt) => {
+    sheets.openMenu({
+      title: art.name || a.untitled,
+      subtitle: art.folderId ? folderName(art.folderId) : a.noFolder,
+      actions: [
+        { id: "preview", label: m.preview, icon: Eye, onSelect: () => setPreviewId(art.id) },
+        { id: "edit", label: m.edit, icon: Pencil, onSelect: () => setEditingId(art.id) },
+        { id: "copy", label: m.copy, icon: Copy, onSelect: () => void copy(art.text) },
+        { id: "duplicate", label: m.duplicate, icon: Copy, onSelect: () => void duplicateArt(art) },
+        { id: "move", label: m.moveTo, icon: FolderInput, onSelect: () => openMoveMenu(art) },
+        { id: "delete", label: m.delete, icon: Trash2, danger: true, onSelect: () => void deleteArt(art) },
+      ],
+    })
+  }
+
+  /** Held folder chip. */
+  const openFolderMenu = (id: string) => {
+    const index = lib.folders.findIndex((f) => f.id === id)
+    sheets.openMenu({
+      title: folderName(id),
+      subtitle: a.folder,
+      actions: [
+        { id: "rename", label: m.rename, icon: Pencil, onSelect: () => void renameFolder(id) },
+        ...(index > 0 ? [{ id: "left", label: m.moveLeft, icon: ArrowLeft, onSelect: () => moveFolder(id, -1) }] : []),
+        ...(index < lib.folders.length - 1
+          ? [{ id: "right", label: m.moveRight, icon: ArrowRight, onSelect: () => moveFolder(id, 1) }]
+          : []),
+        { id: "delete", label: m.delete, icon: Trash2, danger: true, onSelect: () => void deleteFolder(id) },
+      ],
+    })
   }
 
   // Android back button / Escape: leave the editor before the module.
@@ -183,15 +303,11 @@ export function TextArtModule() {
           }
           onCopy={() => copy(editing.text)}
           onDuplicate={() => {
-            if (lib.items.length >= ART_LIMITS.items) return
-            const copyArt = newArt(`${editing.name} 2`, editing.text, editing.folderId)
-            commit({ ...lib, items: [copyArt, ...lib.items] })
-            setEditingId(copyArt.id)
+            const copyArt = duplicateArt(editing)
+            if (copyArt) setEditingId(copyArt.id)
           }}
-          onDelete={() => {
-            if (!window.confirm(a.deleteConfirm)) return
-            commit({ ...lib, items: lib.items.filter((i) => i.id !== editing.id) })
-            setEditingId(null)
+          onDelete={async () => {
+            if (await deleteArt(editing)) setEditingId(null)
           }}
           onBack={() => setEditingId(null)}
         />
@@ -235,8 +351,9 @@ export function TextArtModule() {
                 type="button"
                 onClick={() => setFilter(id)}
                 aria-pressed={filter === id}
+                {...(id !== "all" && id !== "none" ? longPress(() => openFolderMenu(id)) : {})}
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition",
+                  "hold-item flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition",
                   filter === id
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border/50 bg-card text-muted-foreground hover:text-foreground"
@@ -283,27 +400,18 @@ export function TextArtModule() {
           )}
 
           {filter !== "all" && filter !== "none" && !folderInput && (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setFolderInput({ mode: "rename", value: folderName(filter) })}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                {a.rename}
-              </Button>
-              <Button type="button" size="sm" variant="outline" className="text-red-400" onClick={deleteFolder}>
-                <Trash2 className="h-3.5 w-3.5" />
-                {a.deleteFolder}
-              </Button>
-            </div>
+            <Button type="button" size="sm" variant="outline" onClick={() => openFolderMenu(filter)}>
+              <MoreHorizontal className="h-4 w-4" />
+              {m.folderOptions}
+            </Button>
           )}
 
           <Button type="button" className="w-full" onClick={createArt}>
             <Plus className="h-4 w-4" />
             {a.newArt}
           </Button>
+
+          {(lib.items.length > 0 || lib.folders.length > 0) && <HoldHint />}
 
           {/* Templates */}
           {visible.length === 0 ? (
@@ -324,6 +432,7 @@ export function TextArtModule() {
                   onOpen={() => setEditingId(art.id)}
                   onCopy={() => copy(art.text)}
                   onPreview={() => setPreviewId(art.id)}
+                  onMenu={() => openArtMenu(art)}
                 />
               ))}
             </div>
@@ -378,6 +487,7 @@ const ArtCard = memo(function ArtCard({
   onOpen,
   onCopy,
   onPreview,
+  onMenu,
 }: {
   art: TextArt
   folder: string
@@ -388,9 +498,13 @@ const ArtCard = memo(function ArtCard({
   onOpen: () => void
   onCopy: () => void
   onPreview: () => void
+  onMenu: () => void
 }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card">
+    <div
+      {...longPress(() => onMenu())}
+      className="hold-item flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card"
+    >
       <button type="button" onClick={onOpen} className="block text-left">
         <div className="pointer-events-none relative max-h-36 overflow-hidden bg-[#2a1d12] p-2">
           <GameBubble text={art.text} cells={cells} maxLines={8} />

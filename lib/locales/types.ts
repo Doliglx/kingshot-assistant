@@ -45,6 +45,35 @@ export interface AppText {
     reset: string
     autoSaved: string
   }
+  /** Menus opened by holding an item, the same in every module. */
+  menu: {
+    holdHint: string
+    cancel: string
+    ok: string
+    rename: string
+    duplicate: string
+    delete: string
+    edit: string
+    copy: string
+    copyText: string
+    copied: string
+    preview: string
+    moveTo: string
+    moveLeft: string
+    moveRight: string
+    moveUp: string
+    moveDown: string
+    showPanel: string
+    hidePanel: string
+    folderOptions: string
+    newName: string
+    deleteTitle: (name: string) => string
+    deleteMacro: string
+    deleteTemplate: string
+    deleteFolder: string
+    deleteTarget: string
+    macroOptions: string
+  }
   backup: {
     title: string
     intro: string
@@ -268,9 +297,6 @@ export interface AppText {
     noFolder: string
     newFolder: string
     folderName: string
-    rename: string
-    deleteFolder: string
-    deleteFolderConfirm: string
     newArt: string
     untitled: string
     empty: string
@@ -288,7 +314,6 @@ export interface AppText {
     showSpaces: string
     broken: string
     delete: string
-    deleteConfirm: string
     duplicate: string
     sortRecent: string
     sortName: string

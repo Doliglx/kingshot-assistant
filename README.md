@@ -107,6 +107,16 @@ Six other languages (German, Spanish, Portuguese, Italian, Turkish, Russian) wer
 - **Reorder the modules.** Press and hold a tile, then drag it: the other tiles shake and make room, and the page scrolls when you reach its edge. The grid button next to the settings gear opens the same mode. If dragging is awkward, tap a tile and then the place where it should go. The order is saved on the device, a reset button restores the default, and a module added by an update appears at the end rather than being hidden.
 - **BETA TEST** marks the modules still being tested (Rally Timer, Auto Clicker): a light runs around the tag and their border breathes. **NEW** marks a module that has just arrived: a shine crosses the tag and a light runs around the tile. All animations stop if the phone asks for reduced motion.
 
+### Press and hold
+
+The same gesture works everywhere: **press and hold an item for its menu** (right-click on a computer). The menu is a sheet from the bottom, with the same look in every module; anything that deletes asks first, and renaming asks for the new name.
+
+- **Auto Clicker, macros:** edit, show or hide the floating panel, rename, duplicate, copy as text, delete. No need to select a macro and go to the Edit tab first.
+- **Auto Clicker, targets (Edit tab):** duplicate, move up or down, remove.
+- **Text Art, templates:** preview, edit, copy, duplicate, move to a folder (or a new one), delete.
+- **Text Art, folders:** rename, move left or right, delete (the templates are kept, under "No folder"). A "Folder options" button opens the same menu for the selected folder.
+- **Home screen:** holding a tile starts moving it, as described above.
+
 ### Backup and restore
 
 There is no server, so the backup is a file you keep yourself. *Settings → Export a backup* gathers the settings, module order, Text Art templates, Auto Clicker macros and Rally Timer data, and hands the file to the Android share sheet (save it to Files or Drive, send it to yourself). It can also be copied as text. *Import a backup* restores it on this or another phone, after showing what it contains.

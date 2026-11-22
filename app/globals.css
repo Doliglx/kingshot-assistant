@@ -562,6 +562,21 @@
   }
 }
 
+/* An item that opens a menu when held: it dips a little while the finger is down. */
+[data-pressing='true'] {
+  transform: scale(0.97);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 60%, transparent);
+  transition:
+    transform 140ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+.hold-item {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 /* Gallery slides scroll up and down by themselves; sideways touches are ours (the swipe).
    Without this the browser claims them first and cancels the gesture on a real touch screen. */
 .art-slide,

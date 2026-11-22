@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   CheckCircle2,
   ChevronDown,
   ClipboardPaste,
@@ -13,6 +15,7 @@ import {
   ListPlus,
   MousePointerClick,
   Palette,
+  Pencil,
   Plus,
   Settings2,
   Share2,
@@ -53,6 +56,8 @@ import {
   type TargetType,
 } from "@/lib/auto-clicker"
 import { KEYS } from "@/lib/storage-keys"
+import { HoldHint, useSheets } from "@/components/action-sheet"
+import { longPress } from "@/lib/long-press"
 
 const cardCls = "border-border/50 bg-card"
 const titleCls = "flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"
@@ -199,6 +204,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export function AutoClicker() {
   const { t, hue } = useSettings()
   const a = t.ac
+  const m = t.menu
+  const sheets = useSheets()
   const units = useMemo(() => ({ ms: a.unitMs, s: a.unitS, min: a.unitMin }), [a])
   const [section, setSection] = useState<Section>("macros")
   const [native, setNative] = useState(false)
@@ -358,18 +365,55 @@ export function AutoClicker() {
     update({ mode, targets })
   }
 
-  const togglePanel = async () => {
-    if (!selected) return
+  const togglePanelFor = async (c: ClickConfig) => {
     setError("")
     try {
-      if (status.panelShown && status.configId === selected.id) await AutoClickerNative.hidePanel()
-      else await AutoClickerNative.showPanel({ configId: selected.id, texts: panelTexts })
+      if (status.panelShown && status.configId === c.id) await AutoClickerNative.hidePanel()
+      else await AutoClickerNative.showPanel({ configId: c.id, texts: panelTexts })
       setStatus(await AutoClickerNative.status())
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       setError(msg.includes("SERVICE_OFF") ? a.serviceOff : msg)
       refresh()
     }
+  }
+
+  const togglePanel = () => (selected ? togglePanelFor(selected) : undefined)
+
+  const duplicateConfig = (c: ClickConfig) =>
+    add({
+      ...c,
+      id: newConfig("", c.mode).id,
+      name: c.name || a[c.mode],
+      targets: c.targets.map((x) => ({ ...x, id: newTarget().id })),
+    })
+
+  const deleteConfig = async (c: ClickConfig) => {
+    const ok = await sheets.confirm({
+      title: m.deleteTitle(c.name || a[c.mode]),
+      message: m.deleteMacro,
+      confirmLabel: m.delete,
+    })
+    if (!ok) return
+    const next = configs.filter((x) => x.id !== c.id)
+    void persist(next, c.id)
+    if (selectedId === c.id) setSelectedId(next[0]?.id ?? "")
+    setSection("macros")
+  }
+
+  const renameConfig = async (c: ClickConfig) => {
+    const name = await sheets.prompt({
+      title: m.rename,
+      label: a.name,
+      value: c.name,
+      confirmLabel: m.rename,
+      maxLength: LIMITS.name,
+    })
+    if (name) void persist(configs.map((x) => (x.id === c.id ? { ...x, name } : x)), c.id)
+  }
+
+  const copyConfig = async (c: ClickConfig) => {
+    sheets.toast((await copyText(exportConfig(c))) ? a.exported : a.importError)
   }
 
   const changeAppearance = (patch: Partial<Appearance>) => {
@@ -420,6 +464,104 @@ export function AutoClicker() {
     c.mode === "single"
       ? a.single
       : `${c.mode === "sync" ? a.sync : a.multi} · ${a.targetsCount.replace("{n}", String(c.targets.length))}`
+
+  /** Held macro: everything that used to need selecting it and visiting the Edit tab. */
+  const openMacroMenu = (c: ClickConfig) => {
+    const shown = status.panelShown && status.configId === c.id
+    sheets.openMenu({
+      title: c.name || a[c.mode],
+      subtitle: modeLabel(c),
+      actions: [
+        {
+          id: "edit",
+          label: m.edit,
+          icon: Settings2,
+          onSelect: () => {
+            setSelectedId(c.id)
+            setSection("edit")
+          },
+        },
+        ...(native && (status.enabled || shown)
+          ? [
+              {
+                id: "panel",
+                label: shown ? m.hidePanel : m.showPanel,
+                icon: shown ? Square : Layers,
+                onSelect: () => {
+                  setSelectedId(c.id)
+                  void togglePanelFor(c)
+                },
+              },
+            ]
+          : []),
+        { id: "rename", label: m.rename, icon: Pencil, onSelect: () => void renameConfig(c) },
+        { id: "duplicate", label: m.duplicate, icon: Copy, onSelect: () => duplicateConfig(c) },
+        { id: "copy", label: m.copyText, icon: Share2, onSelect: () => void copyConfig(c) },
+        { id: "delete", label: m.delete, icon: Trash2, danger: true, onSelect: () => void deleteConfig(c) },
+      ],
+    })
+  }
+
+  /** Held target of the selected macro: copy, reorder or remove it without opening it. */
+  const openTargetMenu = (c: ClickConfig, index: number) => {
+    if (c.mode === "single") return
+    const target = c.targets[index]
+    const label = target.label || a.target(index + 1)
+    const set = (targets: ClickTarget[]) => {
+      void persist(
+        configs.map((x) => (x.id === c.id ? { ...x, targets } : x)),
+        c.id
+      )
+    }
+    const move = (to: number) => {
+      const next = [...c.targets]
+      next.splice(index, 1)
+      next.splice(to, 0, target)
+      set(next)
+    }
+    const actions = [
+      ...(c.targets.length < LIMITS.targets
+        ? [
+            {
+              id: "duplicate",
+              label: m.duplicate,
+              icon: Copy,
+              onSelect: () => {
+                const next = [...c.targets]
+                next.splice(index + 1, 0, { ...target, id: newTarget().id })
+                set(next)
+              },
+            },
+          ]
+        : []),
+      ...(index > 0 ? [{ id: "up", label: m.moveUp, icon: ArrowUp, onSelect: () => move(index - 1) }] : []),
+      ...(index < c.targets.length - 1
+        ? [{ id: "down", label: m.moveDown, icon: ArrowDown, onSelect: () => move(index + 1) }]
+        : []),
+      ...(c.targets.length > 2
+        ? [
+            {
+              id: "delete",
+              label: m.delete,
+              icon: Trash2,
+              danger: true,
+              onSelect: () =>
+                void (async () => {
+                  const ok = await sheets.confirm({
+                    title: m.deleteTitle(label),
+                    message: m.deleteTarget,
+                    confirmLabel: m.delete,
+                  })
+                  if (!ok) return
+                  set(c.targets.filter((x) => x.id !== target.id))
+                  setOpenTarget(null)
+                })(),
+            },
+          ]
+        : []),
+    ]
+    if (actions.length) sheets.openMenu({ title: label, subtitle: `${a.target(index + 1)} · ${c.name || a[c.mode]}`, actions })
+  }
 
   const SECTIONS: [Section, string, typeof Layers][] = [
     ["macros", a.tabMacros, Layers],
@@ -497,8 +639,9 @@ export function AutoClicker() {
                       type="button"
                       onClick={() => setSelectedId(c.id)}
                       aria-pressed={c.id === selectedId}
+                      {...longPress(() => openMacroMenu(c))}
                       className={cn(
-                        "flex items-center justify-between gap-2 rounded-xl border px-3 py-3 text-left transition",
+                        "hold-item flex items-center justify-between gap-2 rounded-xl border px-3 py-3 text-left transition",
                         c.id === selectedId
                           ? "border-primary bg-primary/15"
                           : "border-border/50 bg-input hover:border-primary/30"
@@ -515,6 +658,7 @@ export function AutoClicker() {
                   ))}
                 </div>
               )}
+              {configs.length > 0 && <HoldHint />}
 
               {selected && (
                 <div className="space-y-2 border-t border-border/50 pt-3">
@@ -716,7 +860,8 @@ export function AutoClicker() {
                         type="button"
                         onClick={() => setOpenTarget(open ? null : target.id)}
                         aria-expanded={open}
-                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+                        {...longPress(() => openTargetMenu(selected, i))}
+                        className="hold-item flex w-full items-center gap-3 px-3 py-2.5 text-left"
                       >
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary font-mono text-xs font-bold text-primary-foreground">
                           {i + 1}
@@ -818,7 +963,13 @@ export function AutoClicker() {
                                 variant="ghost"
                                 size="sm"
                                 className="text-red-400 hover:text-red-300"
-                                onClick={() => {
+                                onClick={async () => {
+                                  const ok = await sheets.confirm({
+                                    title: m.deleteTitle(target.label || a.target(i + 1)),
+                                    message: m.deleteTarget,
+                                    confirmLabel: m.delete,
+                                  })
+                                  if (!ok) return
                                   update({ targets: selected.targets.filter((x) => x.id !== target.id) })
                                   setOpenTarget(null)
                                 }}
@@ -855,14 +1006,7 @@ export function AutoClicker() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  add({
-                    ...selected,
-                    id: newConfig("", selected.mode).id,
-                    name: selected.name || a[selected.mode],
-                    targets: selected.targets.map((x) => ({ ...x, id: newTarget().id })),
-                  })
-                }
+                onClick={() => duplicateConfig(selected)}
               >
                 <Copy className="h-4 w-4" />
                 {a.duplicate}
@@ -871,12 +1015,7 @@ export function AutoClicker() {
                 type="button"
                 variant="outline"
                 className="text-red-400 hover:text-red-300"
-                onClick={() => {
-                  const next = configs.filter((c) => c.id !== selected.id)
-                  void persist(next, selected.id)
-                  setSelectedId(next[0]?.id ?? "")
-                  setSection("macros")
-                }}
+                onClick={() => void deleteConfig(selected)}
               >
                 <Trash2 className="h-4 w-4" />
                 {a.remove}
