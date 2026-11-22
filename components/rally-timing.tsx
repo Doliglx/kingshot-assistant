@@ -48,9 +48,10 @@ import { useUtcClock, type UtcClock } from "@/lib/use-utc-clock"
 import { copyText } from "@/lib/clipboard"
 import { alertTick, unlockAudio } from "@/lib/alerts"
 import { RallyOverlay, floatingAvailable } from "@/lib/rally-overlay"
+import { KEYS } from "@/lib/storage-keys"
 
-const STORAGE_KEY = "ks-assist-rally-v1"
-const GUIDE_KEY = "ks-assist-rally-guide-hidden"
+const STORAGE_KEY = KEYS.rally
+const GUIDE_KEY = KEYS.rallyGuideHidden
 
 type Tab = "utc" | "quick"
 

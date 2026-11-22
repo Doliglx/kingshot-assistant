@@ -27,9 +27,6 @@ export interface AppText {
     reorderHint: string
     reorderDone: string
     reorderReset: string
-    /** "{name}" is replaced by the module name. */
-    moveEarlier: string
-    moveLater: string
     modules: {
       rss: ModuleLabel
       fraki: ModuleLabel
@@ -48,6 +45,50 @@ export interface AppText {
     reset: string
     autoSaved: string
   }
+  backup: {
+    title: string
+    intro: string
+    export: string
+    import: string
+    exportTitle: string
+    exportIntro: string
+    protect: string
+    unlockPassword: string
+    password: string
+    confirm: string
+    show: string
+    hide: string
+    passwordHelp: string
+    passwordShort: string
+    passwordMismatch: string
+    saveFile: string
+    copyText: string
+    working: string
+    saved: string
+    copied: string
+    copyFailed: string
+    textTooBig: string
+    importTitle: string
+    importIntro: string
+    chooseFile: string
+    pasteText: string
+    locked: string
+    unlock: string
+    found: string
+    /** One line describing what the backup holds. */
+    summary: (templates: number, folders: number, macros: number, leaders: number) => string
+    settingsAndOrder: string
+    replaceWarning: string
+    replace: string
+    cancel: string
+    restored: string
+    errNotBackup: string
+    errNewer: string
+    errTooBig: string
+    errCorrupt: string
+    errPassword: string
+    errGeneric: string
+  }
   rss: {
     inventory: string
     level: (n: number) => string
@@ -62,6 +103,8 @@ export interface AppText {
     stats: string
     attack: string
     lethality: string
+    attackShort: string
+    lethalityShort: string
     tier: string
     enabled: string
     disabled: string

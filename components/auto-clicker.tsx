@@ -52,13 +52,14 @@ import {
   type StopRule,
   type TargetType,
 } from "@/lib/auto-clicker"
+import { KEYS } from "@/lib/storage-keys"
 
 const cardCls = "border-border/50 bg-card"
 const titleCls = "flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"
 const selectCls = "h-9 w-full rounded-md border border-border/50 bg-input px-2 text-sm"
 
 /** Ready-made macros are added once, the first time the module is opened. */
-const SEEDED_KEY = "ks-assist-autoclicker-seeded-v1"
+const SEEDED_KEY = KEYS.clickerSeeded
 
 type Section = "macros" | "edit" | "look" | "share"
 type Unit = "ms" | "s" | "min"
@@ -469,7 +470,7 @@ export function AutoClicker() {
             onClick={() => setSection(id)}
             aria-pressed={section === id}
             className={cn(
-              "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[11px] font-bold uppercase tracking-wide transition",
+              "flex flex-col items-center gap-1 rounded-lg px-0.5 py-2 text-[11px] font-bold uppercase tracking-tight transition max-[380px]:text-[10px]",
               section === id
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
                 : "text-muted-foreground hover:text-foreground"
@@ -536,11 +537,11 @@ export function AutoClicker() {
           </Card>
 
           <div className="grid grid-cols-2 gap-2">
-            <Button type="button" variant="outline" onClick={() => add(newConfig(a.single, "single"))}>
+            <Button type="button" variant="outline" className="h-auto min-h-9 whitespace-normal py-2 text-center leading-tight" onClick={() => add(newConfig(a.single, "single"))}>
               <MousePointerClick className="h-4 w-4" />
               {a.newSingle}
             </Button>
-            <Button type="button" variant="outline" onClick={() => add(newConfig(a.multi, "multi"))}>
+            <Button type="button" variant="outline" className="h-auto min-h-9 whitespace-normal py-2 text-center leading-tight" onClick={() => add(newConfig(a.multi, "multi"))}>
               <ListPlus className="h-4 w-4" />
               {a.newMulti}
             </Button>

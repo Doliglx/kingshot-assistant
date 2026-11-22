@@ -40,10 +40,11 @@ import {
   type ArtLibrary,
   type TextArt,
 } from "@/lib/text-art"
+import { KEYS } from "@/lib/storage-keys"
 
 const cardCls = "border-border/50 bg-card"
 const titleCls = "flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"
-const WIDTH_KEY = "ks-assist-textart-width"
+const WIDTH_KEY = KEYS.textArtWidth
 
 type FolderFilter = "all" | "none" | string
 

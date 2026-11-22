@@ -6,6 +6,7 @@
 // and previewed, but nothing can be tapped.
 
 import { Capacitor, registerPlugin } from "@capacitor/core"
+import { KEYS } from "./storage-keys"
 
 export type TargetType = "tap" | "hold" | "swipe"
 /** single: one point · multi: targets one after another · sync: all targets at once */
@@ -298,7 +299,7 @@ export const AutoClickerNative = registerPlugin<AutoClickerPlugin>("AutoClicker"
 
 export const autoClickerAvailable = () => Capacitor.getPlatform() === "android"
 
-const WEB_KEY = "ks-assist-autoclicker-v1"
+const WEB_KEY = KEYS.clickerConfigs
 
 export async function loadConfigs(): Promise<ClickConfig[]> {
   if (autoClickerAvailable()) {
@@ -325,7 +326,7 @@ export async function saveConfigs(configs: ClickConfig[]): Promise<void> {
   }
 }
 
-const WEB_APPEARANCE_KEY = "ks-assist-autoclicker-appearance-v1"
+const WEB_APPEARANCE_KEY = KEYS.clickerAppearance
 
 export async function loadAppearance(): Promise<Appearance> {
   try {

@@ -12,9 +12,9 @@ import { optimise, type FrakStats } from "@/lib/frakinator"
 import { toPercent } from "@/lib/number-input"
 
 const TROOPS = [
-  { key: "inf", icon: Shield, tint: "text-blue-400", chip: "bg-blue-500/20 text-blue-400", short: "INF" },
-  { key: "cav", icon: Swords, tint: "text-red-400", chip: "bg-red-500/20 text-red-400", short: "CAV" },
-  { key: "arc", icon: Target, tint: "text-green-400", chip: "bg-green-500/20 text-green-400", short: "ARC" },
+  { key: "inf", icon: Shield, tint: "text-blue-400", bar: "border-blue-400", chip: "bg-blue-500/20 text-blue-400", short: "INF" },
+  { key: "cav", icon: Swords, tint: "text-red-400", bar: "border-red-400", chip: "bg-red-500/20 text-red-400", short: "CAV" },
+  { key: "arc", icon: Target, tint: "text-green-400", bar: "border-green-400", chip: "bg-green-500/20 text-green-400", short: "ARC" },
 ] as const
 
 const FIELDS = ["attack", "lethality"] as const
@@ -113,35 +113,41 @@ export function Frakinator() {
               </div>
             )}
           </div>
-          {/* Stats are short numbers (up to 5 or 6 digits): one row per troop, two narrow fields. */}
-          <div className="mb-4 grid grid-cols-[minmax(0,1fr)_6.25rem_6.25rem] items-center gap-x-2 gap-y-2">
-            <span />
-            {FIELDS.map((field) => (
-              <span key={field} className="text-center text-xs font-medium text-muted-foreground">
-                {t.frak[field]}
-              </span>
-            ))}
-            {TROOPS.map(({ key, icon: Icon, tint }) => (
-              <Fragment key={key}>
+          {/* Stats are short numbers (up to 5 or 6 digits): one row per troop, two narrow fields
+              whose label sits inside, a colour bar telling the troops apart. */}
+          <div className="mb-4 flex flex-col gap-2">
+            {TROOPS.map(({ key, icon: Icon, tint, bar, short }) => (
+              <div
+                key={key}
+                className={`grid grid-cols-[minmax(0,1fr)_6.75rem_6.75rem] items-center gap-2 border-l-[3px] pl-2.5 ${bar}`}
+              >
                 <div className={`flex min-w-0 items-center gap-2 text-sm font-semibold ${tint}`}>
                   <Icon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{names[key]}</span>
+                  <span className="truncate max-[380px]:hidden">{names[key]}</span>
+                  <span className="hidden max-[380px]:inline">{short}</span>
                 </div>
                 {FIELDS.map((field) => (
-                  <Input
-                    key={field}
-                    type="number"
-                    min={0}
-                    step="0.1"
-                    inputMode="decimal"
-                    aria-label={`${names[key]} – ${t.frak[field]}`}
-                    value={stats[key][field] || ""}
-                    onChange={(e) => update(key, field, e.target.value)}
-                    className="h-11 border-border/50 bg-input px-2 text-center font-mono text-base"
-                    placeholder="0"
-                  />
+                  <div key={field} className="relative">
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground"
+                    >
+                      {t.frak[field === "attack" ? "attackShort" : "lethalityShort"]}
+                    </span>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      inputMode="decimal"
+                      aria-label={`${names[key]} – ${t.frak[field]}`}
+                      value={stats[key][field] || ""}
+                      onChange={(e) => update(key, field, e.target.value)}
+                      className="h-11 border-border/50 bg-input pl-10 pr-2 text-right font-mono text-[15px]"
+                      placeholder="0"
+                    />
+                  </div>
                 ))}
-              </Fragment>
+              </div>
             ))}
           </div>
 

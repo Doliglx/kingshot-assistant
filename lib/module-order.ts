@@ -1,9 +1,11 @@
 // Order of the module tiles on the home screen, chosen by the user (pure logic, no React).
 
+import { KEYS } from "./storage-keys"
+
 export const MODULE_IDS = ["rss", "fraki", "ratio", "buff", "gather", "rally", "clicker", "textart"] as const
 export type ModuleId = (typeof MODULE_IDS)[number]
 
-export const ORDER_KEY = "ks-assist-order-v1"
+export const ORDER_KEY = KEYS.order
 
 /**
  * A usable order from whatever was stored: unknown or repeated ids are

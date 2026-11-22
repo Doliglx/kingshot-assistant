@@ -1,4 +1,5 @@
 // Text art & message templates: storage, and a preview that lays text out the
+import { KEYS } from "./storage-keys"
 // way Kingshot's chat does.
 //
 // How the chat lays text out was measured on a real screenshot (private chat,
@@ -79,7 +80,7 @@ export function sanitizeLibrary(raw: unknown): ArtLibrary {
   return { folders, items }
 }
 
-const STORAGE_KEY = "ks-assist-textart-v1"
+const STORAGE_KEY = KEYS.textArt
 
 export function loadLibrary(): ArtLibrary | null {
   try {

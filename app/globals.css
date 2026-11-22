@@ -335,59 +335,86 @@
    Module tags
    ------------------------------------------------------------------ */
 
-/* BETA TEST: several colours at once, neon, slowly cycling through the whole wheel. */
-.neon-tag {
-  --neon-gradient: linear-gradient(90deg, #ff4fd8, #ffb02e, #7dff6b, #36e0ff, #9b6bff, #ff4fd8);
-  isolation: isolate;
+/* BETA TEST: a light running around the tag, and a shine crossing the text. */
+.tag-chase {
   display: inline-flex;
-  align-items: center;
+  overflow: hidden;
+  isolation: isolate;
   border-radius: 999px;
-  padding: 3px 9px;
-  background: var(--neon-gradient);
-  /* hue-rotate runs on the GPU: the tag costs almost nothing to animate */
-  animation: neon-hue 7s linear infinite;
+  padding: 1px;
+  filter: drop-shadow(0 0 5px rgb(54 224 255 / 0.45));
 }
 
-/* Soft glow around the tag */
-.neon-tag::before {
-  content: '';
+/* The light: a big spinning disc, clipped to the pill. Transform only: runs on the GPU. */
+.tag-chase > u {
   position: absolute;
-  inset: -2px;
-  z-index: -2;
-  border-radius: inherit;
-  background: var(--neon-gradient);
-  filter: blur(7px);
-  opacity: 0.65;
-}
-
-/* Dark fill: what is left of the gradient around it is the 1 px neon outline */
-.neon-tag::after {
-  content: '';
-  position: absolute;
-  inset: 1px;
+  left: 50%;
+  top: 50%;
   z-index: -1;
-  border-radius: inherit;
-  background: oklch(0.13 0.01 25);
+  width: 300%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg, transparent 0 230deg, #36e0ff 290deg, #fff 325deg, #ff4fd8 345deg, transparent 360deg);
+  animation: tile-spin 3s linear infinite;
 }
 
-.neon-tag > span {
-  background: var(--neon-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+.tag-chase > span {
+  display: block;
+  border-radius: 999px;
+  background: oklch(0.13 0.01 25);
+  padding: 2px 8px;
+}
+
+.tag-chase em {
+  display: block;
   font-size: 10px;
+  font-style: normal;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
   white-space: nowrap;
-  filter: brightness(1.25) saturate(1.2);
+  background: linear-gradient(100deg, #36e0ff 0 30%, #fff 45%, #ff4fd8 60% 100%) 0 0 / 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: tag-slide 2s linear infinite;
 }
 
-@keyframes neon-hue {
+@keyframes tag-slide {
+  from {
+    background-position: 100% 0;
+  }
   to {
-    filter: hue-rotate(360deg);
+    background-position: -200% 0;
+  }
+}
+
+/* Tiles of the modules still in test: the neon border breathes. */
+.tile-breathe {
+  border-color: color-mix(in oklch, var(--primary) 85%, white);
+}
+
+.tile-breathe::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 14px var(--primary),
+    0 0 32px var(--primary),
+    inset 0 0 14px color-mix(in oklch, var(--primary) 45%, transparent);
+  /* opacity only: runs on the GPU */
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
   }
 }
 
@@ -504,7 +531,7 @@
   top: 50%;
   width: 240%;
   aspect-ratio: 1;
-  translate: -50% -50%;
+  transform: translate(-50%, -50%);
   background: conic-gradient(
     from 0deg,
     color-mix(in oklch, var(--primary) 25%, transparent) 0deg,
@@ -527,16 +554,66 @@
 }
 
 @keyframes tile-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
   to {
-    transform: rotate(360deg);
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 
+/* ------------------------------------------------------------------
+   Moving the home tiles
+   ------------------------------------------------------------------ */
+
+@keyframes tile-jig {
+  0%,
+  100% {
+    transform: rotate(-1.3deg);
+  }
+  50% {
+    transform: rotate(1.3deg);
+  }
+}
+
+/* In the move mode every tile shakes a little, each out of step (delay set inline). */
+.tile-jig {
+  animation: tile-jig 0.4s ease-in-out infinite;
+}
+
+/* The empty place left by the tile being dragged. */
+.tile-slot {
+  background: color-mix(in oklch, var(--primary) 8%, transparent);
+}
+.tile-slot > * {
+  visibility: hidden;
+}
+
+/* A tile picked by a tap, waiting for its new place. */
+.tile-lifted {
+  transform: scale(1.04);
+  border-style: solid !important;
+  box-shadow:
+    0 10px 24px rgb(0 0 0 / 0.5),
+    0 0 16px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+/* The copy that follows the finger. */
+.tile-float {
+  box-shadow:
+    0 14px 28px rgb(0 0 0 / 0.6),
+    0 0 18px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .tile-jig {
+    animation: none;
+  }
   .neon-accent,
   .neon-logo,
-  .neon-tag,
-  .neon-tag > span,
+  .tag-chase > u,
+  .tag-chase em,
+  .tile-breathe::after,
   .new-tag,
   .new-tag > span,
   .new-tag::before,

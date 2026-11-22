@@ -1,10 +1,13 @@
 import { cn } from "@/lib/utils"
 
-/** Tag for modules still being tested (Rally Timer, Auto Clicker): multicolour neon. */
+/** Tag for modules still being tested (Rally Timer, Auto Clicker): a light runs around it. */
 export function DevBadge({ className }: { className?: string }) {
   return (
-    <span className={cn("neon-tag relative", className)}>
-      <span>BETA TEST</span>
+    <span className={cn("tag-chase relative", className)}>
+      <u aria-hidden />
+      <span>
+        <em>BETA TEST</em>
+      </span>
     </span>
   )
 }

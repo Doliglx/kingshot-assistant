@@ -1,12 +1,10 @@
 "use client"
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Capacitor } from "@capacitor/core"
 import { App as CapacitorApp } from "@capacitor/app"
 import {
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   Crosshair,
   LayoutGrid,
   MessageSquareText,
@@ -32,9 +30,10 @@ import { GatherTimeCalculator } from "@/components/gather-time-calculator"
 import { RallyTiming } from "@/components/rally-timing"
 import { AutoClicker } from "@/components/auto-clicker"
 import { TextArtModule } from "@/components/text-art"
+import { ModuleGrid, type TileDef } from "@/components/module-grid"
 import { DevBadge, NewBadge } from "@/components/badges"
 import { handleBack, onBack } from "@/lib/back-stack"
-import { MODULE_IDS, isDefaultOrder, loadOrder, moveModule, saveOrder, type ModuleId } from "@/lib/module-order"
+import { MODULE_IDS, isDefaultOrder, loadOrder, saveOrder, type ModuleId } from "@/lib/module-order"
 
 const MODULES: {
   id: ModuleId
@@ -66,8 +65,6 @@ export default function KingshotAssistant() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [order, setOrder] = useState<string[]>([...MODULE_IDS])
   const [reordering, setReordering] = useState(false)
-  const tileRefs = useRef(new Map<string, HTMLElement>())
-  const lastRects = useRef(new Map<string, DOMRect>())
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const open = (id: ModuleId, el: HTMLElement) => {
@@ -93,33 +90,10 @@ export default function KingshotAssistant() {
   // The back button leaves the reorder mode first.
   useEffect(() => (reordering ? onBack(() => setReordering(false)) : undefined), [reordering])
 
-  const move = (id: string, delta: number) => {
-    const next = moveModule(order, id, delta)
-    setOrder(next)
-    saveOrder(next)
-  }
   const resetOrder = () => {
     setOrder([...MODULE_IDS])
     saveOrder(MODULE_IDS)
   }
-
-  // Tiles glide to their new place instead of jumping (transform only).
-  useLayoutEffect(() => {
-    const prev = lastRects.current
-    const now = new Map<string, DOMRect>()
-    tileRefs.current.forEach((el, id) => {
-      const r = el.getBoundingClientRect()
-      now.set(id, r)
-      const p = prev.get(id)
-      if (p && (p.left !== r.left || p.top !== r.top) && typeof el.animate === "function") {
-        el.animate(
-          [{ transform: `translate(${p.left - r.left}px, ${p.top - r.top}px)` }, { transform: "translate(0, 0)" }],
-          { duration: 240, easing: "cubic-bezier(0.2, 0.9, 0.25, 1)" }
-        )
-      }
-    })
-    lastRects.current = now
-  }, [order, reordering])
 
   // Android back button: settings → screen inside the module → module → leave the app.
   const stateRef = useRef({ active, settingsOpen })
@@ -127,8 +101,8 @@ export default function KingshotAssistant() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     const sub = CapacitorApp.addListener("backButton", () => {
+      if (handleBack()) return
       if (stateRef.current.settingsOpen) setSettingsOpen(false)
-      else if (handleBack()) return
       else if (stateRef.current.active) close()
       else void CapacitorApp.exitApp()
     })
@@ -140,8 +114,8 @@ export default function KingshotAssistant() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return
+      if (handleBack()) return
       if (stateRef.current.settingsOpen) setSettingsOpen(false)
-      else if (handleBack()) return
       else if (stateRef.current.active) close()
     }
     window.addEventListener("keydown", onKey)
@@ -149,6 +123,13 @@ export default function KingshotAssistant() {
   }, [close])
 
   const current = MODULES.find((m) => m.id === active)
+  const tiles: TileDef[] = MODULES.map((m) => ({
+    id: m.id,
+    icon: m.icon,
+    badge: m.badge,
+    name: t.home.modules[m.id].name,
+    desc: t.home.modules[m.id].desc,
+  }))
 
   return (
     <div className="min-h-screen bg-background">
@@ -199,79 +180,15 @@ export default function KingshotAssistant() {
           </header>
 
           {ready && (
-            <nav className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-              {order.map((id, i) => {
-                const m = MODULES.find((x) => x.id === id)!
-                const Icon = m.icon
-                const label = t.home.modules[m.id]
-                const tileCls = cn(
-                  "tile-enter group relative flex flex-col items-center gap-3 rounded-2xl border px-3 pb-5 pt-8 text-center transition duration-200",
-                  m.badge === "new" ? "tile-new border-transparent" : "border-border/50 bg-card/80",
-                  reordering
-                    ? "border-dashed !border-primary/60"
-                    : "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 active:scale-95"
-                )
-                const inner = (
-                  <>
-                    {m.badge === "new" && (
-                      <>
-                        <span className="tile-ring" aria-hidden>
-                          <i />
-                        </span>
-                        <span className="tile-cover" aria-hidden />
-                      </>
-                    )}
-                    <Badge kind={m.badge} className="absolute right-2 top-2" />
-                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary transition duration-200 group-hover:bg-primary group-hover:text-primary-foreground">
-                      <Icon className="h-7 w-7" />
-                    </span>
-                    <span className="text-sm font-bold leading-tight">{label.name}</span>
-                    <span className="text-xs leading-snug text-muted-foreground">{label.desc}</span>
-                  </>
-                )
-                const setRef = (el: HTMLElement | null) => {
-                  if (el) tileRefs.current.set(id, el)
-                  else tileRefs.current.delete(id)
-                }
-                if (!reordering) {
-                  return (
-                    <button
-                      key={id}
-                      ref={setRef}
-                      type="button"
-                      onClick={(e) => open(m.id, e.currentTarget)}
-                      style={{ animationDelay: `${i * 45}ms` }}
-                      className={tileCls}
-                    >
-                      {inner}
-                    </button>
-                  )
-                }
-                return (
-                  <div key={id} ref={setRef} className={tileCls} style={{ animation: "none" }}>
-                    {inner}
-                    <div className="mt-1 flex gap-2">
-                      {[-1, 1].map((delta) => {
-                        const disabled = delta < 0 ? i === 0 : i === order.length - 1
-                        const text = (delta < 0 ? t.home.moveEarlier : t.home.moveLater).replace("{name}", label.name)
-                        return (
-                          <button
-                            key={delta}
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => move(id, delta)}
-                            aria-label={text}
-                            className="relative z-10 flex h-10 w-12 items-center justify-center rounded-lg border border-primary/50 bg-primary/15 text-primary transition active:scale-90 disabled:opacity-25"
-                          >
-                            {delta < 0 ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </nav>
+            <ModuleGrid
+              tiles={tiles}
+              order={order}
+              reordering={reordering}
+              onReordering={setReordering}
+              onOrder={setOrder}
+              onCommit={saveOrder}
+              onOpen={(id, el) => open(id as ModuleId, el)}
+            />
           )}
         </div>
 

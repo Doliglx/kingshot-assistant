@@ -4,8 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { isLang, type Lang } from "@/lib/messages"
 import { APP_TEXT, LOCALE_TAG, type AppText } from "@/lib/locales"
 import { UI, type UiText } from "@/lib/i18n"
+import { KEYS } from "@/lib/storage-keys"
 
-const STORAGE_KEY = "ks-assist-settings-v1"
+const STORAGE_KEY = KEYS.settings
 
 /** Default accent: the app's original orange. */
 export const DEFAULT_HUE = 35

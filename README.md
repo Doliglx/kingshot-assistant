@@ -5,12 +5,13 @@ A pocket toolbox for Kingshot players: troop calculators, a rally timer that lan
 It runs as an **Android app** (works offline) and as a **web app**, from one codebase.
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="15.5%" alt="Home screen with one tile per module" />
-  <img src="docs/screenshots/rally.png" width="15.5%" alt="Rally Timer, Quick Sync tab" />
-  <img src="docs/screenshots/frakinator.png" width="15.5%" alt="Frakinator result with its chart" />
-  <img src="docs/screenshots/clicker.png" width="15.5%" alt="Auto Clicker with its saved macros" />
-  <img src="docs/screenshots/textart.png" width="15.5%" alt="Text Art: in-game preview of a saved template" />
-  <img src="docs/screenshots/settings.png" width="15.5%" alt="Settings: language and accent colour" />
+  <img src="docs/screenshots/home.png" width="13.2%" alt="Home screen: BETA TEST tags, breathing borders, the NEW tile with its running light" />
+  <img src="docs/screenshots/rally.png" width="13.2%" alt="Rally Timer, Quick Sync tab" />
+  <img src="docs/screenshots/frakinator.png" width="13.2%" alt="Frakinator: compact stats grid and result with its chart" />
+  <img src="docs/screenshots/clicker.png" width="13.2%" alt="Auto Clicker with its saved macros" />
+  <img src="docs/screenshots/textart.png" width="13.2%" alt="Text Art: full-screen in-game preview of a saved template" />
+  <img src="docs/screenshots/settings.png" width="13.2%" alt="Settings: language, accent colour, backup" />
+  <img src="docs/screenshots/backup.png" width="13.2%" alt="Export of a backup, with an optional password" />
 </p>
 
 ## Why it exists
@@ -40,7 +41,7 @@ To get the right stats, launch a Terror rally, then take the stats from the batt
 
 It is not perfect. Some hero skills buff one troop type and can change the ideal ratio. The module ignores hero skills and works from the stats you enter, nothing else.
 
-In the app this explanation is behind a *How it works* button, so it doesn't take room from the calculator.
+In the app this explanation is behind a *How it works* button, so it doesn't take room from the calculator. The stats go in one row per troop, with narrow fields (stats rarely exceed five or six digits), so the whole form fits on screen without scrolling.
 
 Based on the work of Frak: [frakinator.streamlit.app](https://frakinator.streamlit.app) · [Frak's Discord](https://discord.gg/QNGxu9nkp).
 
@@ -103,8 +104,15 @@ Six other languages (German, Spanish, Portuguese, Italian, Turkish, Russian) wer
 
 ### Home screen
 
-- **Reorder the modules.** The grid button next to the settings gear lets you move each tile with arrows; the order is saved on the device, and a reset button restores the default. A module added by an update appears at the end rather than being hidden.
-- **BETA TEST** marks the modules still being tested (Rally Timer, Auto Clicker); **NEW** marks a module that has just arrived.
+- **Reorder the modules.** Press and hold a tile, then drag it: the other tiles shake and make room, and the page scrolls when you reach its edge. The grid button next to the settings gear opens the same mode. If dragging is awkward, tap a tile and then the place where it should go. The order is saved on the device, a reset button restores the default, and a module added by an update appears at the end rather than being hidden.
+- **BETA TEST** marks the modules still being tested (Rally Timer, Auto Clicker): a light runs around the tag and their border breathes. **NEW** marks a module that has just arrived: a shine crosses the tag and a light runs around the tile. All animations stop if the phone asks for reduced motion.
+
+### Backup and restore
+
+There is no server, so the backup is a file you keep yourself. *Settings → Export a backup* gathers the settings, module order, Text Art templates, Auto Clicker macros and Rally Timer data, and hands the file to the Android share sheet (save it to Files or Drive, send it to yourself). It can also be copied as text. *Import a backup* restores it on this or another phone, after showing what it contains.
+
+- **Encryption is optional but recommended.** With a password the file is encrypted with AES-256-GCM, the key derived with PBKDF2-SHA256 (600 000 iterations, random salt). A forgotten password cannot be recovered.
+- **An imported file is never trusted.** Size and format are checked, every value goes through the same validation the modules apply to their own data, unknown content is dropped, and the restore is all-or-nothing: if anything fails, what was there before is put back.
 
 ## Install
 
@@ -121,6 +129,8 @@ lib/                     Game logic, free of UI: unit-tested
   march-time.ts            rally maths and message building
   utc-clock.ts             clock synchronisation (NTP-style sampling)
   frakinator.ts, ratio.ts, modifiers.ts
+  backup.ts                backup format, AES-GCM encryption, validation of imported data
+  module-order.ts          order of the home tiles
   auto-clicker.ts          macro model and validation
   text-art.ts              templates, folders and the chat-bubble line layout
   locales/                 English and French, type-checked against a shared shape
@@ -156,7 +166,7 @@ Every push runs type-checking, the tests, a dependency audit and both builds in 
 
 ## Security and privacy
 
-- **No account, no tracking in the app, no data leaves the phone.** Settings, leaders and macros are stored locally. The Android app's only network request is the clock synchronisation.
+- **No account, no tracking in the app, no data leaves the phone.** Settings, leaders, macros and templates are stored locally. The Android app's only network request is the clock synchronisation. A backup exists only if you make one, and goes only where you send it.
 - **The auto clicker cannot read your screen.** Its accessibility service asks for gesture dispatch only: no screen events, no window content.
 - **Signing keys are not in the repository.** Release builds are signed in CI from secrets and shrunk with R8.
 

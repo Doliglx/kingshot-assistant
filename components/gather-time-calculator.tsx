@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label"
 import { useSettings } from "@/components/app-settings"
 import { boostedDuration } from "@/lib/modifiers"
 import { toCount, toPercent } from "@/lib/number-input"
+import { KEYS } from "@/lib/storage-keys"
 
-const STORAGE_KEY = "gather-current-speed"
+const STORAGE_KEY = KEYS.gatherSpeed
 const SPEED_PRESETS = [5, 10, 15, 20, 25, 50]
 
 const pad = (n: number) => n.toString().padStart(2, "0")

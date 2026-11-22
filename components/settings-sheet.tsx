@@ -1,15 +1,19 @@
 "use client"
 
-import { Check, Globe, Palette, RotateCcw, X } from "lucide-react"
+import { useState } from "react"
+import { Check, Download, Globe, HardDriveDownload, Palette, RotateCcw, Upload, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LANGS, LANG_NAMES, isLang } from "@/lib/messages"
 import { ACCENT_PRESETS, DEFAULT_HUE, accentColor, useSettings } from "@/components/app-settings"
+import { BackupDialog } from "@/components/backup-dialog"
 
 /** Bottom sheet with the language and accent colour settings. */
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { t, lang, hue, setLang, setHue } = useSettings()
+  const [backup, setBackup] = useState<"export" | "import" | null>(null)
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <button
         type="button"
@@ -21,7 +25,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label={t.common.settings}
-        className="sheet-enter relative w-full max-w-xl rounded-t-3xl border border-b-0 border-border/60 bg-card p-6 pb-8 shadow-2xl"
+        className="sheet-enter relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl border border-b-0 border-border/60 bg-card p-6 pb-8 shadow-2xl"
       >
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-black uppercase tracking-tight">{t.common.settings}</h2>
@@ -108,7 +112,36 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </div>
+
+        {/* Backup and restore */}
+        <div className="mt-6 space-y-3 border-t border-border/50 pt-5">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+            <HardDriveDownload className="h-4 w-4" />
+            {t.backup.title}
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">{t.backup.intro}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setBackup("export")}
+              className="flex h-11 items-center justify-center gap-2 rounded-lg border border-border/50 px-2 text-sm transition hover:border-primary/40 active:scale-95"
+            >
+              <Upload className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate">{t.backup.export}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setBackup("import")}
+              className="flex h-11 items-center justify-center gap-2 rounded-lg border border-border/50 px-2 text-sm transition hover:border-primary/40 active:scale-95"
+            >
+              <Download className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate">{t.backup.import}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+    {backup && <BackupDialog mode={backup} onClose={() => setBackup(null)} />}
+    </>
   )
 }
