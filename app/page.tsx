@@ -1,14 +1,18 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { Capacitor } from "@capacitor/core"
 import { App as CapacitorApp } from "@capacitor/app"
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Crosshair,
+  LayoutGrid,
   MessageSquareText,
   MousePointerClick,
   Package,
+  RotateCcw,
   Settings as SettingsIcon,
   Swords,
   Target,
@@ -28,14 +32,15 @@ import { GatherTimeCalculator } from "@/components/gather-time-calculator"
 import { RallyTiming } from "@/components/rally-timing"
 import { AutoClicker } from "@/components/auto-clicker"
 import { TextArtModule } from "@/components/text-art"
-import { handleBack } from "@/lib/back-stack"
-
-type ModuleId = "rss" | "fraki" | "ratio" | "buff" | "gather" | "rally" | "clicker" | "textart"
+import { DevBadge, NewBadge } from "@/components/badges"
+import { handleBack, onBack } from "@/lib/back-stack"
+import { MODULE_IDS, isDefaultOrder, loadOrder, moveModule, saveOrder, type ModuleId } from "@/lib/module-order"
 
 const MODULES: {
   id: ModuleId
   icon: LucideIcon
-  badge?: "Beta" | "Test" | "New"
+  /** "dev": still being tested. "new": just arrived. */
+  badge?: "dev" | "new"
   Component: React.ComponentType
 }[] = [
   { id: "rss", icon: Package, Component: ResourceCalculator },
@@ -43,10 +48,13 @@ const MODULES: {
   { id: "ratio", icon: Target, Component: RatioCalculator },
   { id: "buff", icon: TrendingUp, Component: BuffDebuffCalculator },
   { id: "gather", icon: Timer, Component: GatherTimeCalculator },
-  { id: "rally", icon: Crosshair, badge: "Beta", Component: RallyTiming },
-  { id: "clicker", icon: MousePointerClick, badge: "Test", Component: AutoClicker },
-  { id: "textart", icon: MessageSquareText, badge: "New", Component: TextArtModule },
+  { id: "rally", icon: Crosshair, badge: "dev", Component: RallyTiming },
+  { id: "clicker", icon: MousePointerClick, badge: "dev", Component: AutoClicker },
+  { id: "textart", icon: MessageSquareText, badge: "new", Component: TextArtModule },
 ]
+
+const Badge = ({ kind, className }: { kind?: "dev" | "new"; className?: string }) =>
+  kind === "dev" ? <DevBadge className={className} /> : kind === "new" ? <NewBadge className={className} /> : null
 
 const EXIT_MS = 220
 
@@ -56,6 +64,10 @@ export default function KingshotAssistant() {
   const [closing, setClosing] = useState(false)
   const [origin, setOrigin] = useState("50% 50%")
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [order, setOrder] = useState<string[]>([...MODULE_IDS])
+  const [reordering, setReordering] = useState(false)
+  const tileRefs = useRef(new Map<string, HTMLElement>())
+  const lastRects = useRef(new Map<string, DOMRect>())
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const open = (id: ModuleId, el: HTMLElement) => {
@@ -75,6 +87,39 @@ export default function KingshotAssistant() {
       setClosing(false)
     }, EXIT_MS)
   }, [])
+
+  useEffect(() => setOrder(loadOrder()), [])
+
+  // The back button leaves the reorder mode first.
+  useEffect(() => (reordering ? onBack(() => setReordering(false)) : undefined), [reordering])
+
+  const move = (id: string, delta: number) => {
+    const next = moveModule(order, id, delta)
+    setOrder(next)
+    saveOrder(next)
+  }
+  const resetOrder = () => {
+    setOrder([...MODULE_IDS])
+    saveOrder(MODULE_IDS)
+  }
+
+  // Tiles glide to their new place instead of jumping (transform only).
+  useLayoutEffect(() => {
+    const prev = lastRects.current
+    const now = new Map<string, DOMRect>()
+    tileRefs.current.forEach((el, id) => {
+      const r = el.getBoundingClientRect()
+      now.set(id, r)
+      const p = prev.get(id)
+      if (p && (p.left !== r.left || p.top !== r.top) && typeof el.animate === "function") {
+        el.animate(
+          [{ transform: `translate(${p.left - r.left}px, ${p.top - r.top}px)` }, { transform: "translate(0, 0)" }],
+          { duration: 240, easing: "cubic-bezier(0.2, 0.9, 0.25, 1)" }
+        )
+      }
+    })
+    lastRects.current = now
+  }, [order, reordering])
 
   // Android back button: settings → screen inside the module → module → leave the app.
   const stateRef = useRef({ active, settingsOpen })
@@ -114,11 +159,26 @@ export default function KingshotAssistant() {
       <div
         className={cn(
           "relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-6 sm:px-6",
+          reordering && "pb-28",
           active && !closing && "pointer-events-none"
         )}
         aria-hidden={!!active}
       >
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setReordering((r) => !r)}
+            aria-label={t.home.reorder}
+            aria-pressed={reordering}
+            className={cn(
+              "flex h-11 w-11 items-center justify-center rounded-xl border bg-card/80 transition active:scale-95",
+              reordering
+                ? "border-primary text-primary"
+                : "border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+            )}
+          >
+            <LayoutGrid className="h-5 w-5" />
+          </button>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -140,28 +200,75 @@ export default function KingshotAssistant() {
 
           {ready && (
             <nav className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-              {MODULES.map((m, i) => {
+              {order.map((id, i) => {
+                const m = MODULES.find((x) => x.id === id)!
                 const Icon = m.icon
                 const label = t.home.modules[m.id]
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={(e) => open(m.id, e.currentTarget)}
-                    style={{ animationDelay: `${i * 45}ms` }}
-                    className="tile-enter group relative flex flex-col items-center gap-3 rounded-2xl last:odd:col-span-2 sm:last:odd:col-span-1 border border-border/50 bg-card/80 px-3 py-5 text-center transition duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 active:scale-95"
-                  >
-                    {m.badge && (
-                      <span className="absolute right-2 top-2 rounded-full border border-primary/50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                        {m.badge}
-                      </span>
+                const tileCls = cn(
+                  "tile-enter group relative flex flex-col items-center gap-3 rounded-2xl border px-3 pb-5 pt-8 text-center transition duration-200",
+                  m.badge === "new" ? "tile-new border-transparent" : "border-border/50 bg-card/80",
+                  reordering
+                    ? "border-dashed !border-primary/60"
+                    : "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 active:scale-95"
+                )
+                const inner = (
+                  <>
+                    {m.badge === "new" && (
+                      <>
+                        <span className="tile-ring" aria-hidden>
+                          <i />
+                        </span>
+                        <span className="tile-cover" aria-hidden />
+                      </>
                     )}
+                    <Badge kind={m.badge} className="absolute right-2 top-2" />
                     <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary transition duration-200 group-hover:bg-primary group-hover:text-primary-foreground">
                       <Icon className="h-7 w-7" />
                     </span>
                     <span className="text-sm font-bold leading-tight">{label.name}</span>
                     <span className="text-xs leading-snug text-muted-foreground">{label.desc}</span>
-                  </button>
+                  </>
+                )
+                const setRef = (el: HTMLElement | null) => {
+                  if (el) tileRefs.current.set(id, el)
+                  else tileRefs.current.delete(id)
+                }
+                if (!reordering) {
+                  return (
+                    <button
+                      key={id}
+                      ref={setRef}
+                      type="button"
+                      onClick={(e) => open(m.id, e.currentTarget)}
+                      style={{ animationDelay: `${i * 45}ms` }}
+                      className={tileCls}
+                    >
+                      {inner}
+                    </button>
+                  )
+                }
+                return (
+                  <div key={id} ref={setRef} className={tileCls} style={{ animation: "none" }}>
+                    {inner}
+                    <div className="mt-1 flex gap-2">
+                      {[-1, 1].map((delta) => {
+                        const disabled = delta < 0 ? i === 0 : i === order.length - 1
+                        const text = (delta < 0 ? t.home.moveEarlier : t.home.moveLater).replace("{name}", label.name)
+                        return (
+                          <button
+                            key={delta}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => move(id, delta)}
+                            aria-label={text}
+                            className="relative z-10 flex h-10 w-12 items-center justify-center rounded-lg border border-primary/50 bg-primary/15 text-primary transition active:scale-90 disabled:opacity-25"
+                          >
+                            {delta < 0 ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 )
               })}
             </nav>
@@ -200,16 +307,37 @@ export default function KingshotAssistant() {
               <h2 className="min-w-0 truncate text-lg font-black uppercase tracking-tight">
                 {t.home.modules[current.id].name}
               </h2>
-              {current.badge && (
-                <span className="rounded-full border border-primary/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                  {current.badge}
-                </span>
-              )}
+              <Badge kind={current.badge} />
             </div>
           </div>
           <main className="relative mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
             <current.Component />
           </main>
+        </div>
+      )}
+
+      {reordering && !active && (
+        <div className="fade-enter fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          <div className="mx-auto flex max-w-3xl items-center gap-3">
+            <p className="min-w-0 flex-1 text-sm text-muted-foreground">{t.home.reorderHint}</p>
+            <button
+              type="button"
+              onClick={resetOrder}
+              disabled={isDefaultOrder(order)}
+              aria-label={t.home.reorderReset}
+              title={t.home.reorderReset}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/50 text-muted-foreground transition active:scale-95 disabled:opacity-30"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setReordering(false)}
+              className="h-11 shrink-0 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition active:scale-95"
+            >
+              {t.home.reorderDone}
+            </button>
+          </div>
         </div>
       )}
 

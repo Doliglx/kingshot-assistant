@@ -126,6 +126,17 @@
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
   }
+  /* An app, not a web page: no scrollbar, no bounce at the ends. Scrolling still works. */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+  * {
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
   /* Tapping a control should never select its text */
   button {
     -webkit-user-select: none;
@@ -320,9 +331,221 @@
   }
 }
 
+/* ------------------------------------------------------------------
+   Module tags
+   ------------------------------------------------------------------ */
+
+/* BETA TEST: several colours at once, neon, slowly cycling through the whole wheel. */
+.neon-tag {
+  --neon-gradient: linear-gradient(90deg, #ff4fd8, #ffb02e, #7dff6b, #36e0ff, #9b6bff, #ff4fd8);
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: var(--neon-gradient);
+  /* hue-rotate runs on the GPU: the tag costs almost nothing to animate */
+  animation: neon-hue 7s linear infinite;
+}
+
+/* Soft glow around the tag */
+.neon-tag::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -2;
+  border-radius: inherit;
+  background: var(--neon-gradient);
+  filter: blur(7px);
+  opacity: 0.65;
+}
+
+/* Dark fill: what is left of the gradient around it is the 1 px neon outline */
+.neon-tag::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: oklch(0.13 0.01 25);
+}
+
+.neon-tag > span {
+  background: var(--neon-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  filter: brightness(1.25) saturate(1.2);
+}
+
+@keyframes neon-hue {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+/* NEW: the accent colour, a white shine crossing the letters, twinkling sparks. */
+.new-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 9px;
+  border: 1px solid color-mix(in oklch, var(--primary) 70%, white);
+  background: color-mix(in oklch, var(--primary) 22%, oklch(0.13 0.01 25));
+  box-shadow:
+    0 0 5px var(--primary),
+    0 0 14px color-mix(in oklch, var(--primary) 70%, transparent);
+  animation: new-glow 1.8s ease-in-out infinite;
+}
+
+.new-tag > span {
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in oklch, var(--primary) 45%, white) 0%,
+    color-mix(in oklch, var(--primary) 45%, white) 38%,
+    #fff 50%,
+    color-mix(in oklch, var(--primary) 45%, white) 62%,
+    color-mix(in oklch, var(--primary) 45%, white) 100%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: new-shine 2.4s linear infinite;
+}
+
+.new-tag::before,
+.new-tag::after {
+  content: '✦';
+  position: absolute;
+  font-size: 9px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 6px var(--primary);
+  animation: new-twinkle 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.new-tag::before {
+  top: -6px;
+  right: -3px;
+}
+.new-tag::after {
+  bottom: -5px;
+  left: -2px;
+  font-size: 7px;
+  animation-delay: 0.9s;
+}
+
+@keyframes new-shine {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -130% 0;
+  }
+}
+
+@keyframes new-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 3px var(--primary),
+      0 0 9px color-mix(in oklch, var(--primary) 50%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 7px var(--primary),
+      0 0 20px var(--primary);
+  }
+}
+
+@keyframes new-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15) rotate(45deg);
+  }
+}
+
+/* Outline of the tile of a new module: a bright arc running around it. */
+.tile-new {
+  isolation: isolate;
+  box-shadow: 0 0 16px color-mix(in oklch, var(--primary) 32%, transparent);
+}
+
+.tile-ring {
+  position: absolute;
+  inset: -2px;
+  z-index: -2;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.tile-ring > i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 240%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in oklch, var(--primary) 25%, transparent) 0deg,
+    var(--primary) 70deg,
+    #fff 100deg,
+    var(--primary) 130deg,
+    color-mix(in oklch, var(--primary) 25%, transparent) 200deg,
+    color-mix(in oklch, var(--primary) 25%, transparent) 360deg
+  );
+  /* transform only: runs on the GPU */
+  animation: tile-spin 3.4s linear infinite;
+}
+
+.tile-cover {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--card);
+}
+
+@keyframes tile-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .neon-accent,
-  .neon-logo {
+  .neon-logo,
+  .neon-tag,
+  .neon-tag > span,
+  .new-tag,
+  .new-tag > span,
+  .new-tag::before,
+  .new-tag::after,
+  .tile-ring > i {
     animation: none;
+  }
+  .new-tag::before,
+  .new-tag::after {
+    opacity: 1;
   }
 }

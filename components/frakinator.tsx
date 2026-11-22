@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Area, AreaChart, Tooltip, XAxis, YAxis } from "recharts"
-import { Rocket, Shield, Swords, Target } from "lucide-react"
+import { ChevronDown, ExternalLink, Info, Rocket, Shield, Swords, Target } from "lucide-react"
+import { Capacitor } from "@capacitor/core"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,9 @@ const TROOPS = [
   { key: "arc", icon: Target, tint: "text-green-400", chip: "bg-green-500/20 text-green-400", short: "ARC" },
 ] as const
 
+const FRAK_SITE = "https://frakinator.streamlit.app"
+const FRAK_DISCORD = "https://discord.gg/QNGxu9nkp"
+
 const EMPTY: FrakStats = {
   inf: { attack: 0, lethality: 0 },
   cav: { attack: 0, lethality: 0 },
@@ -29,6 +33,9 @@ export function Frakinator() {
   const [tier, setTier] = useState(true)
   const [calculated, setCalculated] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  // In the Android app a link must navigate (the app opens it in the browser); on the web, a new tab.
+  const native = mounted && Capacitor.isNativePlatform()
 
   useEffect(() => setMounted(true), [])
 
@@ -47,9 +54,52 @@ export function Frakinator() {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <p className="mb-6 rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm leading-relaxed">
-            {t.frak.note}
-          </p>
+          <div className="mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="whitespace-nowrap rounded-full border border-primary/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
+                {t.frak.badge}
+              </span>
+              <button
+                type="button"
+                onClick={() => setHelpOpen((o) => !o)}
+                aria-expanded={helpOpen}
+                aria-controls="frak-help"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border/50 px-2.5 py-1.5 text-sm text-muted-foreground transition hover:border-primary/40 hover:text-foreground active:scale-95"
+              >
+                <Info className="h-4 w-4" />
+                {helpOpen ? t.frak.hide : t.frak.how}
+                <ChevronDown className={`h-4 w-4 transition-transform ${helpOpen ? "rotate-180" : ""}`} />
+              </button>
+            </div>
+            {helpOpen && (
+              <div
+                id="frak-help"
+                className="fade-enter mt-3 space-y-3 rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm leading-relaxed"
+              >
+                <p>{t.frak.bear}</p>
+                <p>{t.frak.source}</p>
+                <p>{t.frak.limits}</p>
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
+                  {t.frak.credit}
+                  {[
+                    [FRAK_SITE, "frakinator.streamlit.app"],
+                    [FRAK_DISCORD, t.frak.discord],
+                  ].map(([href, label]) => (
+                    <a
+                      key={href}
+                      href={href}
+                      target={native ? undefined : "_blank"}
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+                    >
+                      {label}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ))}
+                </p>
+              </div>
+            )}
+          </div>
           <div className="mb-6 grid gap-6 sm:grid-cols-3">
             {TROOPS.map(({ key, icon: Icon, tint }) => (
               <div key={key} className="space-y-3">

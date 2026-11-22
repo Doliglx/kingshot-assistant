@@ -169,11 +169,11 @@ describe("ready-made macros", () => {
 })
 
 describe("rally targets", () => {
-  it("names the four turrets in every message language", () => {
+  it("names the four turrets in both message languages", () => {
     assert.equal(targetTitle("North Turret", "en"), "NORTH TURRET HIT")
     assert.equal(targetTitle("west turret", "fr"), "ATTAQUE DE LA TOURELLE OUEST")
-    assert.equal(targetTitle("East Turret", "de"), "ANGRIFF AUF DEN OSTTURM")
-    assert.equal(targetTitle("South Turret", "ru"), "АТАКА НА ЮЖНУЮ ТУРЕЛЬ")
+    assert.equal(targetTitle("East Turret", "fr"), "ATTAQUE DE LA TOURELLE EST")
+    assert.equal(targetTitle("South Turret", "fr"), "ATTAQUE DE LA TOURELLE SUD")
     assert.equal(targetTitle("Castle", "en"), "CASTLE HIT")
     assert.equal(targetTitle("Sanctuary", "en"), "SANCTUARY HIT")
     const arrival = Date.UTC(2026, 10, 19, 16, 30, 0)

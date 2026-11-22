@@ -23,6 +23,13 @@ export interface AppText {
   }
   home: {
     tagline: string
+    reorder: string
+    reorderHint: string
+    reorderDone: string
+    reorderReset: string
+    /** "{name}" is replaced by the module name. */
+    moveEarlier: string
+    moveLater: string
     modules: {
       rss: ModuleLabel
       fraki: ModuleLabel
@@ -63,7 +70,14 @@ export interface AppText {
     score: string
     hintClick: string
     hintResults: string
-    note: string
+    badge: string
+    how: string
+    hide: string
+    bear: string
+    source: string
+    limits: string
+    credit: string
+    discord: string
     chartNote: (inf: number) => string
   }
   ratio: {
@@ -225,6 +239,8 @@ export interface AppText {
     folder: string
     textPlaceholder: string
     paste: string
+    previous: string
+    next: string
     preview: string
     previewNote: string
     measured: string

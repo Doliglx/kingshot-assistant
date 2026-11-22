@@ -10,5 +10,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(RallyOverlayPlugin.class);
         registerPlugin(AutoClickerPlugin.class);
         super.onCreate(savedInstanceState);
+        // No scrollbar over the content: the app should not look like a web page.
+        getBridge().getWebView().setVerticalScrollBarEnabled(false);
+        getBridge().getWebView().setHorizontalScrollBarEnabled(false);
     }
 }

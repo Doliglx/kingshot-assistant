@@ -36,7 +36,13 @@ Everything is built around how the game is actually played: you type the numbers
 
 **Made for the Bear Trap only.** In Bear Trap, only attack and lethality count, which is why rallies use offensive joiners who buff those two stats. It has nothing to do with a regular PvP battle, so don't use the result for one.
 
+To get the right stats, launch a Terror rally, then take the stats from the battle report.
+
 It is not perfect. Some hero skills buff one troop type and can change the ideal ratio. The module ignores hero skills and works from the stats you enter, nothing else.
+
+In the app this explanation is behind a *How it works* button, so it doesn't take room from the calculator.
+
+Based on the work of Frak: [frakinator.streamlit.app](https://frakinator.streamlit.app) · [Frak's Discord](https://discord.gg/QNGxu9nkp).
 
 ### Rally Timer
 
@@ -83,7 +89,7 @@ For the emoji drawings and ready-made messages people paste into alliance chat. 
 
 - **Folders and search.** Sort templates into folders, search by name or content, order by recent or name.
 - **Exact copy.** *Copy* puts the stored text on the clipboard as it was saved: no trimming, no normalising, so spaces (including ideographic ones used for indentation) and line breaks survive. Pasting from the clipboard into a template works the same way.
-- **In-game preview.** The preview lays the text out the way the game's chat bubble does, calibrated on screenshots from the game: 16 emoji per line, breaks at normal spaces, and a font close to the game's. The 👁 button on each template in the list opens the whole preview without entering the editor.
+- **In-game preview.** The preview lays the text out the way the game's chat bubble does, calibrated on screenshots from the game: 16 emoji per line, breaks at normal spaces, and a font close to the game's. The 👁 button on each template in the list opens a full-screen viewer, one template at a time: swipe left or right (or use the arrows) to go through the list, and use back or ✕ to close it.
 - **Known limits.** Emoji are drawn by your phone, so they can look a little different from the game's. On long lines of plain text a break can land one character away from where the game puts it. The bubble width can be changed if you want to test other sizes.
 - **Paste checks.** The editor counts characters and spaces, and warns when a character was lost on the way in (a damaged paste).
 
@@ -91,7 +97,14 @@ Everything stays on the device.
 
 ### Languages and appearance
 
-English (default), French, German, Spanish, Portuguese (BR), Italian, Turkish and Russian. The accent colour is yours to pick, from eight presets or a custom hue, and it applies to the whole app including the floating panels. Both are saved on the device. The screenshots above use the pink preset.
+English (default) and French. The accent colour is yours to pick, from eight presets or a custom hue, and it applies to the whole app including the floating panels. Both are saved on the device. The screenshots above use the pink preset.
+
+Six other languages (German, Spanish, Portuguese, Italian, Turkish, Russian) were translated earlier. They are kept in [`archive/translations`](archive/translations) and are not built into the app, to keep every new feature down to two translations.
+
+### Home screen
+
+- **Reorder the modules.** The grid button next to the settings gear lets you move each tile with arrows; the order is saved on the device, and a reset button restores the default. A module added by an update appears at the end rather than being hidden.
+- **BETA TEST** marks the modules still being tested (Rally Timer, Auto Clicker); **NEW** marks a module that has just arrived.
 
 ## Install
 
@@ -110,12 +123,13 @@ lib/                     Game logic, free of UI: unit-tested
   frakinator.ts, ratio.ts, modifiers.ts
   auto-clicker.ts          macro model and validation
   text-art.ts              templates, folders and the chat-bubble line layout
-  locales/                 one file per language, type-checked against a shared shape
+  locales/                 English and French, type-checked against a shared shape
 android/                 Capacitor project
   app/src/main/java/…      native code (Java)
     RallyTimerService        countdown bubble + notification (foreground service)
     AutoClickService         gestures-only accessibility service, panel and markers
     *Plugin                  bridges between the web layer and the services
+archive/translations/    the other six languages, kept but not built
 tests/                   node:test suites
 ```
 
@@ -150,7 +164,7 @@ Details, permissions and how to report a problem: [SECURITY.md](SECURITY.md).
 
 ## Status
 
-The calculators are stable. Rally Timer is in beta, Auto Clicker and Text Art are in test: both rely on Android features that behave differently from one phone brand to another, so feedback from real devices is what moves them forward. Known gaps are tracked in the [release notes](docs/release-notes).
+The calculators are stable. Rally Timer and Auto Clicker are tagged BETA TEST in the app, and Text Art is new and in test: both rely on Android features that behave differently from one phone brand to another, so feedback from real devices is what moves them forward. Known gaps are tracked in the [release notes](docs/release-notes).
 
 ## Disclaimer
 
@@ -160,4 +174,4 @@ This is a fan-made tool. It is not affiliated with, endorsed by, or connected to
 
 ### En français
 
-KingShot Assistant regroupe des outils pour les joueurs de Kingshot : calculateurs de troupes et de ressources, un minuteur de rallies qui fait atterrir toutes les marches à la même seconde, et un auto clicker pour les actions répétitives, et un module Text Art pour ranger et copier ses dessins en emoji et ses modèles de message. L'application existe en version Android (utilisable hors ligne) et en version web, à partir du même code. Elle est disponible en huit langues, dont le français. L'APK se télécharge depuis la page [Releases](../../releases).
+KingShot Assistant regroupe des outils pour les joueurs de Kingshot : calculateurs de troupes et de ressources, un minuteur de rallies qui fait atterrir toutes les marches à la même seconde, et un auto clicker pour les actions répétitives, et un module Text Art pour ranger et copier ses dessins en emoji et ses modèles de message. L'application existe en version Android (utilisable hors ligne) et en version web, à partir du même code. Elle est disponible en anglais et en français. L'APK se télécharge depuis la page [Releases](../../releases).
