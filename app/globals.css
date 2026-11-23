@@ -11,33 +11,33 @@
   --card-foreground: oklch(0.95 0.01 80);
   --popover: oklch(0.14 0.01 25);
   --popover-foreground: oklch(0.95 0.01 80);
-  --primary: oklch(0.68 0.2 35);
+  --primary: oklch(0.68 0.2 343);
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.22 0.01 25);
   --secondary-foreground: oklch(0.85 0.02 80);
   --muted: oklch(0.22 0.01 25);
   --muted-foreground: oklch(0.74 0.025 60);
-  --accent: oklch(0.85 0.15 85);
+  --accent: oklch(0.85 0.15 33);
   --accent-foreground: oklch(0.15 0.01 25);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.3 0.012 30);
   --input: oklch(0.1 0.005 25);
-  --ring: oklch(0.68 0.2 35);
-  --chart-1: oklch(0.68 0.2 35);
-  --chart-2: oklch(0.85 0.15 85);
+  --ring: oklch(0.68 0.2 343);
+  --chart-1: oklch(0.68 0.2 343);
+  --chart-2: oklch(0.85 0.15 33);
   --chart-3: oklch(0.5 0.08 55);
   --chart-4: oklch(0.55 0.05 60);
   --chart-5: oklch(0.45 0.03 50);
   --radius: 0.75rem;
   --sidebar: oklch(0.14 0.01 25);
   --sidebar-foreground: oklch(0.95 0.01 80);
-  --sidebar-primary: oklch(0.68 0.2 35);
+  --sidebar-primary: oklch(0.68 0.2 343);
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.22 0.01 25);
   --sidebar-accent-foreground: oklch(0.95 0.01 80);
   --sidebar-border: oklch(0.25 0.01 30);
-  --sidebar-ring: oklch(0.68 0.2 35);
+  --sidebar-ring: oklch(0.68 0.2 343);
 }
 
 .dark {
@@ -47,32 +47,32 @@
   --card-foreground: oklch(0.95 0.01 80);
   --popover: oklch(0.14 0.01 25);
   --popover-foreground: oklch(0.95 0.01 80);
-  --primary: oklch(0.68 0.2 35);
+  --primary: oklch(0.68 0.2 343);
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.22 0.01 25);
   --secondary-foreground: oklch(0.85 0.02 80);
   --muted: oklch(0.22 0.01 25);
   --muted-foreground: oklch(0.74 0.025 60);
-  --accent: oklch(0.85 0.15 85);
+  --accent: oklch(0.85 0.15 33);
   --accent-foreground: oklch(0.15 0.01 25);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.3 0.012 30);
   --input: oklch(0.1 0.005 25);
-  --ring: oklch(0.68 0.2 35);
-  --chart-1: oklch(0.68 0.2 35);
-  --chart-2: oklch(0.85 0.15 85);
+  --ring: oklch(0.68 0.2 343);
+  --chart-1: oklch(0.68 0.2 343);
+  --chart-2: oklch(0.85 0.15 33);
   --chart-3: oklch(0.5 0.08 55);
   --chart-4: oklch(0.55 0.05 60);
   --chart-5: oklch(0.45 0.03 50);
   --sidebar: oklch(0.14 0.01 25);
   --sidebar-foreground: oklch(0.95 0.01 80);
-  --sidebar-primary: oklch(0.68 0.2 35);
+  --sidebar-primary: oklch(0.68 0.2 343);
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.22 0.01 25);
   --sidebar-accent-foreground: oklch(0.95 0.01 80);
   --sidebar-border: oklch(0.25 0.01 30);
-  --sidebar-ring: oklch(0.68 0.2 35);
+  --sidebar-ring: oklch(0.68 0.2 343);
 }
 
 @theme inline {
@@ -125,6 +125,17 @@
     line-height: 1.5;
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
+  }
+  /* An app, not a web page: no scrollbar, no bounce at the ends. Scrolling still works. */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+  * {
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
   }
   /* Tapping a control should never select its text */
   button {
@@ -320,9 +331,320 @@
   }
 }
 
+/* ------------------------------------------------------------------
+   Module tags
+   ------------------------------------------------------------------ */
+
+/* BETA TEST: a light running around the tag, and a shine crossing the text. */
+.tag-chase {
+  display: inline-flex;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 999px;
+  padding: 1px;
+  filter: drop-shadow(0 0 5px rgb(54 224 255 / 0.45));
+}
+
+/* The light: a big spinning disc, clipped to the pill. Transform only: runs on the GPU. */
+.tag-chase > u {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  width: 300%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg, transparent 0 230deg, #36e0ff 290deg, #fff 325deg, #ff4fd8 345deg, transparent 360deg);
+  animation: tile-spin 3s linear infinite;
+}
+
+.tag-chase > span {
+  display: block;
+  border-radius: 999px;
+  background: oklch(0.13 0.01 25);
+  padding: 2px 8px;
+}
+
+.tag-chase em {
+  display: block;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  background: linear-gradient(100deg, #36e0ff 0 30%, #fff 45%, #ff4fd8 60% 100%) 0 0 / 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: tag-slide 2s linear infinite;
+}
+
+@keyframes tag-slide {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Tiles of the modules still in test: the neon border breathes. */
+.tile-breathe {
+  border-color: color-mix(in oklch, var(--primary) 85%, white);
+}
+
+.tile-breathe::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 14px var(--primary),
+    0 0 32px var(--primary),
+    inset 0 0 14px color-mix(in oklch, var(--primary) 45%, transparent);
+  /* opacity only: runs on the GPU */
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* NEW: the accent colour, a white shine crossing the letters, twinkling sparks. */
+.new-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 9px;
+  border: 1px solid color-mix(in oklch, var(--primary) 70%, white);
+  background: color-mix(in oklch, var(--primary) 22%, oklch(0.13 0.01 25));
+  box-shadow:
+    0 0 5px var(--primary),
+    0 0 14px color-mix(in oklch, var(--primary) 70%, transparent);
+  animation: new-glow 1.8s ease-in-out infinite;
+}
+
+.new-tag > span {
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in oklch, var(--primary) 45%, white) 0%,
+    color-mix(in oklch, var(--primary) 45%, white) 38%,
+    #fff 50%,
+    color-mix(in oklch, var(--primary) 45%, white) 62%,
+    color-mix(in oklch, var(--primary) 45%, white) 100%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: new-shine 2.4s linear infinite;
+}
+
+.new-tag::before,
+.new-tag::after {
+  content: '✦';
+  position: absolute;
+  font-size: 9px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 6px var(--primary);
+  animation: new-twinkle 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.new-tag::before {
+  top: -6px;
+  right: -3px;
+}
+.new-tag::after {
+  bottom: -5px;
+  left: -2px;
+  font-size: 7px;
+  animation-delay: 0.9s;
+}
+
+@keyframes new-shine {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -130% 0;
+  }
+}
+
+@keyframes new-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 3px var(--primary),
+      0 0 9px color-mix(in oklch, var(--primary) 50%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 7px var(--primary),
+      0 0 20px var(--primary);
+  }
+}
+
+@keyframes new-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15) rotate(45deg);
+  }
+}
+
+/* Outline of the tile of a new module: a bright arc running around it. */
+.tile-new {
+  isolation: isolate;
+  box-shadow: 0 0 16px color-mix(in oklch, var(--primary) 32%, transparent);
+}
+
+.tile-ring {
+  position: absolute;
+  inset: -2px;
+  z-index: -2;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.tile-ring > i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 240%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in oklch, var(--primary) 25%, transparent) 0deg,
+    var(--primary) 70deg,
+    #fff 100deg,
+    var(--primary) 130deg,
+    color-mix(in oklch, var(--primary) 25%, transparent) 200deg,
+    color-mix(in oklch, var(--primary) 25%, transparent) 360deg
+  );
+  /* transform only: runs on the GPU */
+  animation: tile-spin 3.4s linear infinite;
+}
+
+.tile-cover {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--card);
+}
+
+@keyframes tile-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* An item that opens a menu when held: it dips a little while the finger is down. */
+[data-pressing='true'] {
+  transform: scale(0.97);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 60%, transparent);
+  transition:
+    transform 140ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+.hold-item {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Gallery slides scroll up and down by themselves; sideways touches are ours (the swipe).
+   Without this the browser claims them first and cancels the gesture on a real touch screen. */
+.art-slide,
+.art-slide * {
+  touch-action: pan-y;
+}
+
+/* ------------------------------------------------------------------
+   Moving the home tiles
+   ------------------------------------------------------------------ */
+
+@keyframes tile-jig {
+  0%,
+  100% {
+    transform: rotate(-1.3deg);
+  }
+  50% {
+    transform: rotate(1.3deg);
+  }
+}
+
+/* In the move mode every tile shakes a little, each out of step (delay set inline). */
+.tile-jig {
+  animation: tile-jig 0.4s ease-in-out infinite;
+}
+
+/* The empty place left by the tile being dragged. */
+.tile-slot {
+  background: color-mix(in oklch, var(--primary) 8%, transparent);
+}
+.tile-slot > * {
+  visibility: hidden;
+}
+
+/* A tile picked by a tap, waiting for its new place. */
+.tile-lifted {
+  transform: scale(1.04);
+  border-style: solid !important;
+  box-shadow:
+    0 10px 24px rgb(0 0 0 / 0.5),
+    0 0 16px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+/* The copy that follows the finger. */
+.tile-float {
+  box-shadow:
+    0 14px 28px rgb(0 0 0 / 0.6),
+    0 0 18px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .neon-accent,
-  .neon-logo {
+  .tile-jig {
     animation: none;
+  }
+  .neon-accent,
+  .neon-logo,
+  .tag-chase > u,
+  .tag-chase em,
+  .tile-breathe::after,
+  .new-tag,
+  .new-tag > span,
+  .new-tag::before,
+  .new-tag::after,
+  .tile-ring > i {
+    animation: none;
+  }
+  .new-tag::before,
+  .new-tag::after {
+    opacity: 1;
   }
 }

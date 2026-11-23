@@ -185,9 +185,9 @@ final class AutoClickStore {
 
     /** How the markers and the floating panel look. Shared by every macro. */
     static final class Appearance {
-        int markerDp = 46; // diameter of a marker
-        int panelOpacity = 94; // percent
-        boolean hideWhileRunning = false;
+        int markerDp = 24; // diameter of a marker
+        int panelOpacity = 70; // percent
+        boolean hideWhileRunning = true;
     }
 
     static String readAppearanceRaw(Context ctx) {
@@ -214,10 +214,10 @@ final class AutoClickStore {
             if (size instanceof Number) {
                 a.markerDp = (int) clamp(((Number) size).longValue(), MARKER_RANGE[0], MARKER_RANGE[1]);
             } else {
-                a.markerDp = "s".equals(size) ? 34 : "l".equals(size) ? 60 : 46;
+                a.markerDp = "s".equals(size) ? 34 : "m".equals(size) ? 46 : "l".equals(size) ? 60 : 24;
             }
-            a.panelOpacity = (int) clamp(o.optLong("panelOpacity", 94), 30, 100);
-            a.hideWhileRunning = o.optBoolean("hideWhileRunning", false);
+            a.panelOpacity = (int) clamp(o.optLong("panelOpacity", 70), 30, 100);
+            a.hideWhileRunning = o.optBoolean("hideWhileRunning", true);
         } catch (JSONException ignored) {}
         return a;
     }

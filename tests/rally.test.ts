@@ -134,7 +134,7 @@ describe("Quick Sync", () => {
       assert.ok(!/undefined|\$\{/.test(msg), lang)
       assert.ok(msg.includes("NORTH TOWER") && msg.includes("+5s Bea"), lang)
     }
-    assert.equal(buildQuickMessage("Burg", plan, "de").split("\n")[0], "ANGRIFF AUF DIE BURG")
+    assert.equal(buildQuickMessage("Castle", plan, "fr").split("\n")[0], "ATTAQUE DU CHÂTEAU")
   })
 })
 

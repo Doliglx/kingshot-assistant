@@ -6,6 +6,7 @@
 // and previewed, but nothing can be tapped.
 
 import { Capacitor, registerPlugin } from "@capacitor/core"
+import { KEYS } from "./storage-keys"
 
 export type TargetType = "tap" | "hold" | "swipe"
 /** single: one point · multi: targets one after another · sync: all targets at once */
@@ -191,22 +192,24 @@ export function healingTemplate(name: string, label: string): ClickConfig {
  * then wait 2 minutes on the last step. Positions were recorded on a
  * 1080 × 2340 screen; on another screen, move the markers once.
  */
-const TERROR_STEPS: Array<[x: number, y: number, label: string, tapMs: number, delayAfterMs: number]> = [
-  [66, 1736, "Loupe", 20, 900],
-  [394, 1788, "", 20, 900],
-  [576, 2247, "", 20, 900],
-  [550, 1228, "", 20, 900],
-  [551, 960, "", 20, 900],
-  [567, 1513, "", 20, 900],
-  [780, 271, "", 20, 900],
-  [861, 2245, "", 500, 120_000],
+const TERROR_STEPS: Array<[x: number, y: number, tapMs: number, delayAfterMs: number]> = [
+  [71, 1741, 20, 900],
+  [399, 1793, 20, 900],
+  [581, 2252, 20, 900],
+  [555, 1233, 20, 900],
+  [556, 965, 20, 900],
+  [572, 1518, 20, 900],
+  [785, 276, 20, 900],
+  [866, 2250, 500, 120_000],
 ]
 
-export function terrorTemplate(name: string): ClickConfig {
+/** `labels`: the name of each step, in the app's language. */
+export function terrorTemplate(name: string, labels: readonly string[] = []): ClickConfig {
   const c = newConfig(name, "multi")
   c.intervalMs = 1000
-  c.targets = TERROR_STEPS.map(([x, y, label, tapMs, delayAfterMs]) => ({
-    ...newTarget(label),
+  c.startDelaySec = 1
+  c.targets = TERROR_STEPS.map(([x, y, tapMs, delayAfterMs], i) => ({
+    ...newTarget(labels[i] ?? ""),
     x,
     y,
     tapMs,
@@ -259,7 +262,7 @@ export interface Appearance {
   hideWhileRunning: boolean
 }
 
-export const DEFAULT_APPEARANCE: Appearance = { markerSize: 46, panelOpacity: 94, hideWhileRunning: false }
+export const DEFAULT_APPEARANCE: Appearance = { markerSize: 24, panelOpacity: 70, hideWhileRunning: true }
 
 // Older versions stored the marker size as "s", "m" or "l".
 const LEGACY_MARKER: Record<string, number> = { s: 34, m: 46, l: 60 }
@@ -272,7 +275,7 @@ export function sanitizeAppearance(raw: unknown): Appearance {
         ? LEGACY_MARKER[o.markerSize]
         : clamp(o.markerSize, MARKER_RANGE, DEFAULT_APPEARANCE.markerSize),
     panelOpacity: clamp(o.panelOpacity, [30, 100], DEFAULT_APPEARANCE.panelOpacity),
-    hideWhileRunning: o.hideWhileRunning === true,
+    hideWhileRunning: typeof o.hideWhileRunning === "boolean" ? o.hideWhileRunning : DEFAULT_APPEARANCE.hideWhileRunning,
   }
 }
 
@@ -298,7 +301,7 @@ export const AutoClickerNative = registerPlugin<AutoClickerPlugin>("AutoClicker"
 
 export const autoClickerAvailable = () => Capacitor.getPlatform() === "android"
 
-const WEB_KEY = "ks-assist-autoclicker-v1"
+const WEB_KEY = KEYS.clickerConfigs
 
 export async function loadConfigs(): Promise<ClickConfig[]> {
   if (autoClickerAvailable()) {
@@ -325,7 +328,7 @@ export async function saveConfigs(configs: ClickConfig[]): Promise<void> {
   }
 }
 
-const WEB_APPEARANCE_KEY = "ks-assist-autoclicker-appearance-v1"
+const WEB_APPEARANCE_KEY = KEYS.clickerAppearance
 
 export async function loadAppearance(): Promise<Appearance> {
   try {

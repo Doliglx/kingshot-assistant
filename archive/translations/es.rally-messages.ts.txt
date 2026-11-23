@@ -1,0 +1,10 @@
+  es: {
+    castle: "ATAQUE AL CASTILLO",
+    turret: { n: "ATAQUE A LA TORRETA NORTE", s: "ATAQUE A LA TORRETA SUR", e: "ATAQUE A LA TORRETA ESTE", w: "ATAQUE A LA TORRETA OESTE" },
+    target: (n) => `ATAQUE A ${n}`,
+    at: (title, t) => `${title} a las ${t} UTC`,
+    launchAt: "Lanza tu rally a las:",
+    firstLaunches: (n) => `${n} lanza primero.`,
+    thenLaunch: "Después, lanza tu rally:",
+    countFrom: (n) => `(cuenta desde el lanzamiento de ${n})`,
+  },

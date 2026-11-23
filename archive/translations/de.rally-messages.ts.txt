@@ -1,0 +1,10 @@
+  de: {
+    castle: "ANGRIFF AUF DIE BURG",
+    turret: { n: "ANGRIFF AUF DEN NORDTURM", s: "ANGRIFF AUF DEN SÜDTURM", e: "ANGRIFF AUF DEN OSTTURM", w: "ANGRIFF AUF DEN WESTTURM" },
+    target: (n) => `ANGRIFF AUF ${n}`,
+    at: (title, t) => `${title} um ${t} UTC`,
+    launchAt: "Rally starten um:",
+    firstLaunches: (n) => `${n} startet zuerst.`,
+    thenLaunch: "Danach Rally starten:",
+    countFrom: (n) => `(gezählt ab dem Start von ${n})`,
+  },

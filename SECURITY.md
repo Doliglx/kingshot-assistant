@@ -10,11 +10,20 @@ KingShot Assistant has no account system and no backend of its own. Everything y
 
 | Data | Where it lives |
 |---|---|
-| Language, accent colour | Local storage of the app |
+| Language, accent colour, module order | Local storage of the app |
 | Rally leaders and march times | Local storage of the app |
+| Text Art templates | Local storage of the app |
 | Auto clicker macros | The app's private preferences |
 
-Backups and device-to-device transfer of this data are disabled.
+Android's own cloud backup and device-to-device transfer of this data are disabled (`allowBackup="false"`).
+
+### Backup file (made by you, on request)
+
+*Settings → Export a backup* writes one JSON file with the data above. It is created only when you ask, in the app's cache folder, and handed to the system share sheet; earlier backup files left in the cache are deleted first. The app never sends it anywhere itself.
+
+- **Encryption.** With a password: AES-256-GCM, key from PBKDF2-SHA256 (600 000 iterations, random 16-byte salt, random 12-byte IV). The header is authenticated, so changing the algorithm or the iteration count is detected. Without a password the file is readable by anyone who has it. A forgotten password cannot be recovered.
+- **Importing.** A file is treated as untrusted: its size is capped, the iteration count is bounded (so a hostile file cannot freeze the app), only known sections are read, and each value is validated by the same code that validates the module's own data. The import is all-or-nothing and rolls back on failure.
+- Importing replaces the same data on the device, after showing a summary and asking for confirmation.
 
 ### Network
 

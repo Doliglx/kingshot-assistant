@@ -6,8 +6,11 @@ import { App as CapacitorApp } from "@capacitor/app"
 import {
   ArrowLeft,
   Crosshair,
+  LayoutGrid,
+  MessageSquareText,
   MousePointerClick,
   Package,
+  RotateCcw,
   Settings as SettingsIcon,
   Swords,
   Target,
@@ -26,13 +29,17 @@ import { BuffDebuffCalculator } from "@/components/buff-debuff-calculator"
 import { GatherTimeCalculator } from "@/components/gather-time-calculator"
 import { RallyTiming } from "@/components/rally-timing"
 import { AutoClicker } from "@/components/auto-clicker"
-
-type ModuleId = "rss" | "fraki" | "ratio" | "buff" | "gather" | "rally" | "clicker"
+import { TextArtModule } from "@/components/text-art"
+import { ModuleGrid, type TileDef } from "@/components/module-grid"
+import { DevBadge, NewBadge } from "@/components/badges"
+import { handleBack, onBack } from "@/lib/back-stack"
+import { MODULE_IDS, isDefaultOrder, loadOrder, saveOrder, type ModuleId } from "@/lib/module-order"
 
 const MODULES: {
   id: ModuleId
   icon: LucideIcon
-  badge?: "Beta" | "Test"
+  /** "dev": still being tested. "new": just arrived. */
+  badge?: "dev" | "new"
   Component: React.ComponentType
 }[] = [
   { id: "rss", icon: Package, Component: ResourceCalculator },
@@ -40,9 +47,13 @@ const MODULES: {
   { id: "ratio", icon: Target, Component: RatioCalculator },
   { id: "buff", icon: TrendingUp, Component: BuffDebuffCalculator },
   { id: "gather", icon: Timer, Component: GatherTimeCalculator },
-  { id: "rally", icon: Crosshair, badge: "Beta", Component: RallyTiming },
-  { id: "clicker", icon: MousePointerClick, badge: "Test", Component: AutoClicker },
+  { id: "rally", icon: Crosshair, badge: "dev", Component: RallyTiming },
+  { id: "clicker", icon: MousePointerClick, badge: "dev", Component: AutoClicker },
+  { id: "textart", icon: MessageSquareText, badge: "new", Component: TextArtModule },
 ]
+
+const Badge = ({ kind, className }: { kind?: "dev" | "new"; className?: string }) =>
+  kind === "dev" ? <DevBadge className={className} /> : kind === "new" ? <NewBadge className={className} /> : null
 
 const EXIT_MS = 220
 
@@ -52,6 +63,8 @@ export default function KingshotAssistant() {
   const [closing, setClosing] = useState(false)
   const [origin, setOrigin] = useState("50% 50%")
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [order, setOrder] = useState<string[]>([...MODULE_IDS])
+  const [reordering, setReordering] = useState(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const open = (id: ModuleId, el: HTMLElement) => {
@@ -72,12 +85,23 @@ export default function KingshotAssistant() {
     }, EXIT_MS)
   }, [])
 
-  // Android back button: settings → module → leave the app.
+  useEffect(() => setOrder(loadOrder()), [])
+
+  // The back button leaves the reorder mode first.
+  useEffect(() => (reordering ? onBack(() => setReordering(false)) : undefined), [reordering])
+
+  const resetOrder = () => {
+    setOrder([...MODULE_IDS])
+    saveOrder(MODULE_IDS)
+  }
+
+  // Android back button: settings → screen inside the module → module → leave the app.
   const stateRef = useRef({ active, settingsOpen })
   stateRef.current = { active, settingsOpen }
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     const sub = CapacitorApp.addListener("backButton", () => {
+      if (handleBack()) return
       if (stateRef.current.settingsOpen) setSettingsOpen(false)
       else if (stateRef.current.active) close()
       else void CapacitorApp.exitApp()
@@ -90,6 +114,7 @@ export default function KingshotAssistant() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return
+      if (handleBack()) return
       if (stateRef.current.settingsOpen) setSettingsOpen(false)
       else if (stateRef.current.active) close()
     }
@@ -98,6 +123,13 @@ export default function KingshotAssistant() {
   }, [close])
 
   const current = MODULES.find((m) => m.id === active)
+  const tiles: TileDef[] = MODULES.map((m) => ({
+    id: m.id,
+    icon: m.icon,
+    badge: m.badge,
+    name: t.home.modules[m.id].name,
+    desc: t.home.modules[m.id].desc,
+  }))
 
   return (
     <div className="min-h-screen bg-background">
@@ -108,11 +140,26 @@ export default function KingshotAssistant() {
       <div
         className={cn(
           "relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-6 sm:px-6",
+          reordering && "pb-28",
           active && !closing && "pointer-events-none"
         )}
         aria-hidden={!!active}
       >
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setReordering((r) => !r)}
+            aria-label={t.home.reorder}
+            aria-pressed={reordering}
+            className={cn(
+              "flex h-11 w-11 items-center justify-center rounded-xl border bg-card/80 transition active:scale-95",
+              reordering
+                ? "border-primary text-primary"
+                : "border-border/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+            )}
+          >
+            <LayoutGrid className="h-5 w-5" />
+          </button>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -133,32 +180,15 @@ export default function KingshotAssistant() {
           </header>
 
           {ready && (
-            <nav className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-              {MODULES.map((m, i) => {
-                const Icon = m.icon
-                const label = t.home.modules[m.id]
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={(e) => open(m.id, e.currentTarget)}
-                    style={{ animationDelay: `${i * 45}ms` }}
-                    className="tile-enter group relative flex flex-col items-center gap-3 rounded-2xl last:odd:col-span-2 sm:last:odd:col-span-1 border border-border/50 bg-card/80 px-3 py-5 text-center transition duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 active:scale-95"
-                  >
-                    {m.badge && (
-                      <span className="absolute right-2 top-2 rounded-full border border-primary/50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                        {m.badge}
-                      </span>
-                    )}
-                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary transition duration-200 group-hover:bg-primary group-hover:text-primary-foreground">
-                      <Icon className="h-7 w-7" />
-                    </span>
-                    <span className="text-sm font-bold leading-tight">{label.name}</span>
-                    <span className="text-xs leading-snug text-muted-foreground">{label.desc}</span>
-                  </button>
-                )
-              })}
-            </nav>
+            <ModuleGrid
+              tiles={tiles}
+              order={order}
+              reordering={reordering}
+              onReordering={setReordering}
+              onOrder={setOrder}
+              onCommit={saveOrder}
+              onOpen={(id, el) => open(id as ModuleId, el)}
+            />
           )}
         </div>
 
@@ -194,16 +224,37 @@ export default function KingshotAssistant() {
               <h2 className="min-w-0 truncate text-lg font-black uppercase tracking-tight">
                 {t.home.modules[current.id].name}
               </h2>
-              {current.badge && (
-                <span className="rounded-full border border-primary/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                  {current.badge}
-                </span>
-              )}
+              <Badge kind={current.badge} />
             </div>
           </div>
           <main className="relative mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
             <current.Component />
           </main>
+        </div>
+      )}
+
+      {reordering && !active && (
+        <div className="fade-enter fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          <div className="mx-auto flex max-w-3xl items-center gap-3">
+            <p className="min-w-0 flex-1 text-sm text-muted-foreground">{t.home.reorderHint}</p>
+            <button
+              type="button"
+              onClick={resetOrder}
+              disabled={isDefaultOrder(order)}
+              aria-label={t.home.reorderReset}
+              title={t.home.reorderReset}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/50 text-muted-foreground transition active:scale-95 disabled:opacity-30"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setReordering(false)}
+              className="h-11 shrink-0 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition active:scale-95"
+            >
+              {t.home.reorderDone}
+            </button>
+          </div>
         </div>
       )}
 

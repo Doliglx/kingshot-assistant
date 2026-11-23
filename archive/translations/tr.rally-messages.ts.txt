@@ -1,0 +1,10 @@
+  tr: {
+    castle: "KALE SALDIRISI",
+    turret: { n: "KUZEY KULESİ SALDIRISI", s: "GÜNEY KULESİ SALDIRISI", e: "DOĞU KULESİ SALDIRISI", w: "BATI KULESİ SALDIRISI" },
+    target: (n) => `${n} SALDIRISI`,
+    at: (title, t) => `${title} saat ${t} UTC'de`,
+    launchAt: "Rally'ni şu saatte başlat:",
+    firstLaunches: (n) => `${n} ilk başlatır.`,
+    thenLaunch: "Ardından rally'ni başlat:",
+    countFrom: (n) => `(${n} başlatınca saymaya başla)`,
+  },
