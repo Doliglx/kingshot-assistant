@@ -278,6 +278,7 @@ export const fr: AppText = {
     templates: "Macros prêtes à l'emploi",
     healHelp: "Une cible pressée toutes les 20 ms : placez le repère sur le bouton de soin.",
     terrorTemplate: "Modèle : Terror",
+    terrorSteps: ["Recherche", "Choisir Terreur", "Rechercher la terreur", "Sélectionner la terreur trouvée", "Ralliement", "Lancer un ralliement", "Choisir la formation", "Déployer et attendre"],
     terrorName: "Terror",
     terrorHelp: "Lance un ralliement de Terror toutes les 2 minutes. Positions enregistrées sur un écran 1080 × 2340 : sur un autre écran, replacez les repères une fois.",
     about: "À propos de l'auto clicker",

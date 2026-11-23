@@ -35,7 +35,6 @@ import { longPress } from "@/lib/long-press"
 import {
   ART_LIMITS,
   DEFAULT_LINE_CELLS,
-  EXAMPLE_ART,
   layoutChat,
   loadLibrary,
   newArt,
@@ -46,6 +45,7 @@ import {
   type TextArt,
 } from "@/lib/text-art"
 import { KEYS } from "@/lib/storage-keys"
+import { defaultLibrary } from "@/lib/default-art"
 
 const cardCls = "border-border/50 bg-card"
 const titleCls = "flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"
@@ -77,8 +77,7 @@ export function TextArtModule() {
   useEffect(() => {
     let stored = loadLibrary()
     if (stored === null) {
-      const folder = newFolder(a.exampleFolder)
-      stored = { folders: [folder], items: [newArt(a.exampleName, EXAMPLE_ART, folder.id)] }
+      stored = defaultLibrary(a.exampleName)
       saveLibrary(stored)
     }
     setLib(stored)

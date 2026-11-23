@@ -5,6 +5,10 @@ import { MODULE_IDS, isDefaultOrder, moveModule, sanitizeOrder } from "../lib/mo
 const DEFAULT = [...MODULE_IDS]
 
 describe("module order", () => {
+  it("starts with the order chosen for everyone", () => {
+    assert.deepEqual(DEFAULT, ["clicker", "textart", "rally", "ratio", "fraki", "gather", "buff", "rss"])
+  })
+
   it("falls back to the default order", () => {
     assert.deepEqual(sanitizeOrder(null), DEFAULT)
     assert.deepEqual(sanitizeOrder("rss"), DEFAULT)
@@ -46,6 +50,6 @@ describe("module order", () => {
 
   it("recognises the default order", () => {
     assert.ok(isDefaultOrder(DEFAULT))
-    assert.ok(!isDefaultOrder(moveModule(DEFAULT, "rss", 1)))
+    assert.ok(!isDefaultOrder(moveModule(DEFAULT, "clicker", 1)))
   })
 })

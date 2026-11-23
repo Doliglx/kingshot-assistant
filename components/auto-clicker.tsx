@@ -272,7 +272,7 @@ export function AutoClicker() {
       }
       if (!seeded) {
         if (list.length === 0) {
-          list = [healingTemplate(a.healName, a.healStep1), terrorTemplate(a.terrorName)]
+          list = [healingTemplate(a.healName, a.healStep1), terrorTemplate(a.terrorName, a.terrorSteps)]
           await saveConfigs(list)
         }
         try {
@@ -706,7 +706,7 @@ export function AutoClicker() {
                 icon={<Skull className="h-4 w-4" />}
                 label={a.terrorTemplate}
                 help={a.terrorHelp}
-                onClick={() => add(terrorTemplate(a.terrorName))}
+                onClick={() => add(terrorTemplate(a.terrorName, a.terrorSteps))}
               />
             </CardContent>
           </Card>

@@ -2,7 +2,8 @@
 
 import { KEYS } from "./storage-keys"
 
-export const MODULE_IDS = ["rss", "fraki", "ratio", "buff", "gather", "rally", "clicker", "textart"] as const
+/** Default order of the tiles on the home screen (the order is also the list of known modules). */
+export const MODULE_IDS = ["clicker", "textart", "rally", "ratio", "fraki", "gather", "buff", "rss"] as const
 export type ModuleId = (typeof MODULE_IDS)[number]
 
 export const ORDER_KEY = KEYS.order

@@ -88,6 +88,7 @@ A floating panel with numbered markers you drag onto the buttons you want presse
 
 For the emoji drawings and ready-made messages people paste into alliance chat. It is new and still in test.
 
+- **Starter collection.** A new install comes with about 40 ready-made templates in two folders, *Pixel Art* and *ASCII*. Existing installs keep their own.
 - **Folders and search.** Sort templates into folders, search by name or content, order by recent or name.
 - **Exact copy.** *Copy* puts the stored text on the clipboard as it was saved: no trimming, no normalising, so spaces (including ideographic ones used for indentation) and line breaks survive. Pasting from the clipboard into a template works the same way.
 - **In-game preview.** The preview lays the text out the way the game's chat bubble does, calibrated on screenshots from the game: 16 emoji per line, breaks at normal spaces, and a font close to the game's. The 👁 button on each template in the list opens a full-screen viewer, one template at a time: swipe left or right to go through the list, and use back or ✕ to close it.
@@ -98,7 +99,7 @@ Everything stays on the device.
 
 ### Languages and appearance
 
-English (default) and French. The accent colour is yours to pick, from eight presets or a custom hue, and it applies to the whole app including the floating panels. Both are saved on the device. The screenshots above use the pink preset.
+English (default) and French. The accent colour is yours to pick, from eight presets or a custom hue, and it applies to the whole app including the floating panels. Both are saved on the device. Pink is the default.
 
 Six other languages (German, Spanish, Portuguese, Italian, Turkish, Russian) were translated earlier. They are kept in [`archive/translations`](archive/translations) and are not built into the app, to keep every new feature down to two translations.
 

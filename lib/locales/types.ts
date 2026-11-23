@@ -273,6 +273,8 @@ export interface AppText {
     templates: string
     healHelp: string
     terrorTemplate: string
+    /** Name of each of the 8 steps of the Terror macro. */
+    terrorSteps: string[]
     terrorName: string
     terrorHelp: string
     about: string

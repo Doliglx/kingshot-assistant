@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
+import { EXAMPLE_ID, defaultLibrary } from "../lib/default-art"
 import {
   EXAMPLE_ART,
   graphemes,
@@ -148,5 +149,38 @@ describe("library storage", () => {
     assert.equal(lib.items[0].name.length, 60)
     assert.equal(lib.items[1].folderId, null)
     assert.equal(lib.items[1].text, "")
+  })
+})
+
+describe("default templates", () => {
+  const lib = defaultLibrary("Example: pixel hero")
+
+  it("is valid as it is: nothing is changed or dropped by the checks", () => {
+    assert.deepEqual(sanitizeLibrary(JSON.parse(JSON.stringify(lib))), lib)
+  })
+
+  it("has two folders and every template in one of them or none", () => {
+    assert.deepEqual(lib.folders.map((f) => f.name), ["Pixel Art", "ASCII"])
+    assert.ok(lib.items.length >= 30)
+    const folderIds = new Set(lib.folders.map((f) => f.id))
+    assert.ok(lib.items.every((i) => i.folderId === null || folderIds.has(i.folderId)))
+  })
+
+  it("has unique ids and no template left empty", () => {
+    assert.equal(new Set(lib.items.map((i) => i.id)).size, lib.items.length)
+    assert.ok(lib.items.every((i) => i.text.trim().length > 0))
+  })
+
+  it("keeps the pixel hero byte for byte and names it in the app's language", () => {
+    const hero = lib.items.find((i) => i.id === EXAMPLE_ID)
+    assert.equal(hero?.text, EXAMPLE_ART)
+    assert.equal(hero?.name, "Example: pixel hero")
+    assert.equal(defaultLibrary("Exemple").items.find((i) => i.id === EXAMPLE_ID)?.name, "Exemple")
+  })
+
+  it("gives a fresh copy each time", () => {
+    const a = defaultLibrary("x")
+    a.items[0].name = "changed"
+    assert.notEqual(defaultLibrary("x").items[0].name, "changed")
   })
 })

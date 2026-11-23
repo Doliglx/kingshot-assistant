@@ -132,11 +132,13 @@ describe("auto clicker: simultaneous mode, sharing, appearance", () => {
 
   it("clamps the appearance settings", () => {
     assert.deepEqual(sanitizeAppearance({ markerSize: "xxl", panelOpacity: 5, hideWhileRunning: "yes" }), {
-      markerSize: 46,
+      markerSize: 24,
       panelOpacity: 30,
-      hideWhileRunning: false,
+      hideWhileRunning: true, // not a boolean: the default applies
     })
-    assert.equal(sanitizeAppearance(null).panelOpacity, 94)
+    assert.equal(sanitizeAppearance({ hideWhileRunning: false }).hideWhileRunning, false)
+    // What a new install gets: small markers, a see-through panel, markers hidden while running.
+    assert.deepEqual(sanitizeAppearance(null), { markerSize: 24, panelOpacity: 70, hideWhileRunning: true })
     assert.equal(sanitizeAppearance({ markerSize: 4 }).markerSize, 16)
     assert.equal(sanitizeAppearance({ markerSize: 22 }).markerSize, 22)
     assert.equal(sanitizeAppearance({ markerSize: "s" }).markerSize, 34)
@@ -158,9 +160,11 @@ describe("ready-made macros", () => {
     assert.equal(c.mode, "multi")
     assert.equal(c.targets.length, 8)
     assert.deepEqual(c.targets.map((t) => [t.x, t.y]), [
-      [66, 1736], [394, 1788], [576, 2247], [550, 1228], [551, 960], [567, 1513], [780, 271], [861, 2245],
+      [71, 1741], [399, 1793], [581, 2252], [555, 1233], [556, 965], [572, 1518], [785, 276], [866, 2250],
     ])
-    assert.equal(c.targets[0].label, "Loupe")
+    assert.equal(c.startDelaySec, 1)
+    assert.equal(c.targets[0].label, "")
+    assert.equal(terrorTemplate("Terror", ["Search", "Select Terror"]).targets[1].label, "Select Terror")
     assert.equal(c.targets[7].tapMs, 500)
     assert.equal(c.targets[7].delayAfterMs, 120_000)
     assert.ok(c.targets.slice(0, 7).every((t) => t.delayAfterMs === 900 && t.tapMs === 20))

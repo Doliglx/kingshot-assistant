@@ -278,6 +278,7 @@ export const en: AppText = {
     templates: "Ready-made macros",
     healHelp: "One target tapped every 20 ms: put the marker on the heal button.",
     terrorTemplate: "Template: Terror",
+    terrorSteps: ["Search", "Select Terror", "Search terror", "Select terror found", "Rally", "Hold a rally", "Select formation", "Deploy and wait"],
     terrorName: "Terror",
     terrorHelp: "Launches a Terror rally every 2 minutes. Positions were recorded on a 1080 × 2340 screen: on another screen, move the markers once.",
     about: "About the auto clicker",

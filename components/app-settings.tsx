@@ -8,8 +8,8 @@ import { KEYS } from "@/lib/storage-keys"
 
 const STORAGE_KEY = KEYS.settings
 
-/** Default accent: the app's original orange. */
-export const DEFAULT_HUE = 35
+/** Default accent: pink. */
+export const DEFAULT_HUE = 343
 
 export const ACCENT_PRESETS = [
   { id: "orange", hue: 35 },
@@ -19,7 +19,7 @@ export const ACCENT_PRESETS = [
   { id: "teal", hue: 190 },
   { id: "blue", hue: 250 },
   { id: "violet", hue: 295 },
-  { id: "pink", hue: 345 },
+  { id: "pink", hue: 343 },
 ] as const
 
 /** CSS colour of the accent for a given hue (same lightness and chroma as the theme). */
